@@ -1,0 +1,27 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  color: theme('textColor.black');
+  background: theme('colors.background.50');
+  transition: color 0.2s, background-color 0.5s;
+  font-family: theme('fontFamily.sans');
+  font-size: theme('fontSize.base');
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dark body {
+  color: theme('textColor.white');
+  background: theme('colors.background.800');
+}
