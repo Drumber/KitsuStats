@@ -7,19 +7,11 @@ import {
   TooltipComponent,
   LegendComponent,
 } from "echarts/components";
-import VChart, { THEME_KEY } from "vue-echarts";
-import {
-  computed,
-  onBeforeUnmount,
-  onMounted,
-  provide,
-  reactive,
-  ref,
-  watchEffect,
-} from "vue";
-import { useStore } from "../store";
+import VChart from "vue-echarts";
+import { onBeforeUnmount, onMounted, reactive, ref, watchEffect } from "vue";
 import resolveConfig from "tailwindcss/resolveConfig";
 import tailwindConfig from "tailwind.config.js";
+import { filterLibraryEntriesForType } from "../utils/dataUtils";
 
 use([
   CanvasRenderer,
@@ -31,11 +23,7 @@ use([
 
 const props = defineProps(["libraryData"]);
 const fullConfig = resolveConfig(tailwindConfig);
-const store = useStore();
 const chart = ref(null);
-
-const chartTheme = computed(() => (store.isDarkMode.value ? "dark" : "light"));
-provide(THEME_KEY, chartTheme);
 
 const state = reactive({
   isLoading: true,
@@ -138,6 +126,7 @@ const option = ref({
       },
       label: {
         backgroundColor: "transparent",
+        formatter: "{b} ({c})",
       },
     },
     {
@@ -152,8 +141,8 @@ const option = ref({
         },
       },
       label: {
-        position: "outside",
         backgroundColor: "transparent",
+        formatter: "{b} ({c})",
       },
     },
   ],
@@ -186,15 +175,8 @@ const createChartData = (libraryEntries) => [
   },
 ];
 
-const filterLibraryEntriesForType = (libraryEntries, mediaType) => {
-  return libraryEntries.filter((e) => {
-    return e.relationships[mediaType].data !== null;
-  });
-};
-
 watchEffect(() => {
   if (!props.libraryData) return;
-  console.log("update chart data");
   const libraryEntries = props.libraryData.data;
 
   const animeEntries = filterLibraryEntriesForType(libraryEntries, "anime");
@@ -246,11 +228,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="card flex flex-col">
-    <h1
-      class="text-2xl mb-1 text-primary-500 dark:text-primary-400 font-semibold"
-    >
-      Library Status
-    </h1>
+    <h1 class="text-2xl mb-1 font-semibold">Library Status</h1>
     <v-chart
       class="grow"
       ref="chart"
