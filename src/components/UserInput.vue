@@ -39,7 +39,6 @@ const searchUsers = (query) => {
       return;
     }
     searchIndex.search(query, { hitsPerPage: 10 }).then(({ hits }) => {
-      console.log(hits);
       state.searchResults = hits;
       state.selectedUser = hits[0] ? hits[0] : undefined;
     });
@@ -68,7 +67,6 @@ const previewUserForId = (userId) => {
 };
 
 const onSelectedUserChange = (user) => {
-  console.log("selected user", user);
   state.selectedUser = user;
 };
 

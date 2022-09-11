@@ -49,7 +49,7 @@ const vCloseOnEscape = {
     <div
       v-if="state.isExpanded"
       @click="toggleMenu"
-      class="absolute mt-1 p-2 right-4 bg-background-100/30 dark:bg-background-600/40 backdrop-blur shadow-md z-20 rounded-md"
+      class="absolute mt-1 p-2 right-4 bg-background-100/30 dark:bg-background-600/40 backdrop-blur shadow-md z-50 rounded-md"
     >
       <slot name="menu"><!-- Menu Content --></slot>
     </div>

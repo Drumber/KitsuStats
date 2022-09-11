@@ -15,7 +15,7 @@ defineProps(["userModel", "userAttr"]);
       v-else
       class="h-16 w-16 shrink-0 rounded-full bg-white/10 inline-block"
     ></div>
-    <div class="ml-4 w-full">
+    <div class="ml-4 w-full overflow-hidden">
       <h1 class="text-2xl mb-1">
         <a
           :href="'https://kitsu.io/users/' + userModel.id"
@@ -28,7 +28,9 @@ defineProps(["userModel", "userAttr"]);
           #{{ userModel.id }}
         </span>
       </h1>
-      <p class="text-gray-700 dark:text-gray-300">{{ userAttr.about }}</p>
+      <p class="text-gray-700 dark:text-gray-300 overflow-auto">
+        {{ userAttr.about }}
+      </p>
       <table class="table-auto w-full">
         <tr>
           <td>Join Date:</td>

@@ -49,11 +49,9 @@ const option = ref({
 });
 
 const createChartData = (libraryEntries, size, stepSize, mapFunc) => {
-  console.log(libraryEntries.map((e) => e.attributes.ratingTwenty));
   const libraryRatings = libraryEntries
     .filter((e) => e.attributes.ratingTwenty != null)
     .map((e) => mapFunc(e.attributes.ratingTwenty));
-  console.log("Ratings", libraryRatings);
   const ratingCounts = [];
   for (let i = 1.0; i <= size; i += stepSize) {
     const count = libraryRatings.filter((e) => e === i).length;
@@ -119,7 +117,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="card flex flex-col">
+  <div class="card flex flex-col z-[1]">
     <div class="flex">
       <h1 class="text-2xl mb-1 font-semibold">Ratings Given</h1>
       <DropdownMenu class="ml-auto self-center">

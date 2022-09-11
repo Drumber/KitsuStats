@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { onMounted, reactive, toRaw, provide } from "vue";
+import { onMounted, reactive, provide } from "vue";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { API_URL, LIBRARY_ENTRIES_PAGE_LIMIT } from "../constants";
 import { useStore } from "../store";
@@ -9,6 +9,7 @@ import AppHeader from "./widgets/AppHeader.vue";
 import UserInfoCard from "./UserInfoCard.vue";
 import LibraryMetaCard from "./LibraryMetaCard.vue";
 import RatingsGivenCard from "./RatingsGivenCard.vue";
+import CategoryBreakdownCard from "./CategoryBreakdownCard.vue";
 
 const props = defineProps({
   userId: {
@@ -27,6 +28,7 @@ provide(THEME_KEY, chartTheme);
 
 const state = reactive({
   userModel: undefined,
+  userStats: undefined,
   libraryData: undefined,
   libraryEntries: [],
   libraryFetchError: false,
@@ -72,8 +74,10 @@ onMounted(async () => {
 
 const updateUserModel = async (userId) => {
   try {
-    state.userModel = await fetchUserModel(userId);
-    console.log("Fetched user model", toRaw(state.userModel));
+    const response = await fetchUserModel(userId);
+    console.log("Fetched user model", response);
+    state.userModel = response.data;
+    state.userStats = response.included.filter((x) => x.type === "stats");
     document.title = `KitsuStats | ${state.userModel.attributes.name}`;
     return true;
   } catch (error) {
@@ -96,13 +100,13 @@ const updateLibraryEntries = async (userId) => {
 };
 
 const fetchUserModel = async (userId) => {
-  const url = API_URL + `/users/${userId}`;
+  const url = API_URL + `/users/${userId}?include=stats`;
   const response = await fetch(url);
   const json = await response.json();
   if (!response.ok) {
     throw Error(JSON.stringify(json));
   }
-  return json.data;
+  return json;
 };
 
 const fetchLibraryEntries = async (userId) => {
@@ -133,14 +137,20 @@ const fetchLibraryEntries = async (userId) => {
     <!-- Library Status -->
     <LibraryMetaCard
       :library-data="state.libraryData"
-      class="lg:col-span-2 h-[32rem] sm:h-96 lg:h-80"
+      class="lg:col-span-2 h-[32rem] sm:h-96 lg:min-h-80"
     ></LibraryMetaCard>
 
     <!-- Ratings Given -->
     <RatingsGivenCard
       :library-data="state.libraryData"
-      class="h-96"
+      class="min-h-[24rem]"
     ></RatingsGivenCard>
+
+    <!-- Category Breakdown -->
+    <CategoryBreakdownCard
+      :user-stats="state.userStats"
+      class="lg:col-span-2 h-[38rem]"
+    ></CategoryBreakdownCard>
 
     <!-- Library Statistics -->
     <div class="col-start-1 md:col-span-2 lg:col-span-3 card">
