@@ -2,7 +2,6 @@
 import { reactive, ref, watchEffect } from "vue";
 import { use } from "echarts/core";
 import VChart from "vue-echarts";
-import { filterLibraryEntriesForType } from "../utils/dataUtils";
 import { CanvasRenderer } from "echarts/renderers";
 import { LegendComponent } from "echarts/components";
 import { RadarChart } from "echarts/charts";
@@ -10,7 +9,7 @@ import DropdownMenu from "./widgets/DropdownMenu.vue";
 
 use([CanvasRenderer, RadarChart, LegendComponent]);
 
-const props = defineProps(["libraryData"]);
+const props = defineProps(["animeLibraryData", "mangaLibraryData"]);
 
 const state = reactive({
   isLoading: true,
@@ -69,12 +68,12 @@ const createIndicators = (maxValue, size, stepSize) => {
 };
 
 watchEffect(() => {
-  if (!props.libraryData) return;
-  const libraryEntries = props.libraryData.data;
+  if (!props.animeLibraryData || !props.mangaLibraryData) return;
 
-  const animeEntries = filterLibraryEntriesForType(libraryEntries, "anime");
-  const mangaEntries = filterLibraryEntriesForType(libraryEntries, "manga");
+  const animeEntries = props.animeLibraryData.data;
+  const mangaEntries = props.mangaLibraryData.data;
 
+  // TODO: auto detect rating system based on values
   const ratingSystem = state.ratingSystem;
   // default: advanced rating (20)
   let size = 10;

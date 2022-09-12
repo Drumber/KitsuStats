@@ -29,8 +29,10 @@ provide(THEME_KEY, chartTheme);
 const state = reactive({
   userModel: undefined,
   userStats: undefined,
-  libraryData: undefined,
-  libraryEntries: [],
+  animeMetaData: undefined,
+  mangaMetaData: undefined,
+  animeLibraryData: undefined,
+  mangaLibraryData: undefined,
   libraryFetchError: false,
 });
 
@@ -59,7 +61,7 @@ onBeforeRouteUpdate(async (to, from) => {
   if (!isUserModelSet) {
     return getNotFoundRouteLocation(to);
   }
-  state.libraryFetchError = await updateLibraryEntries(userId);
+  state.libraryFetchError = !(await updateLibraryEntries(userId));
   return true;
 });
 
@@ -69,7 +71,7 @@ onMounted(async () => {
     router.push(getNotFoundRouteLocation(route));
     return;
   }
-  state.libraryFetchError = await updateLibraryEntries(props.userId);
+  state.libraryFetchError = !(await updateLibraryEntries(props.userId));
 });
 
 const updateUserModel = async (userId) => {
@@ -88,10 +90,24 @@ const updateUserModel = async (userId) => {
 
 const updateLibraryEntries = async (userId) => {
   try {
-    const response = await fetchLibraryEntries(userId);
-    console.log("Fetched library entries", response);
-    state.libraryData = response;
-    state.libraryEntries = response.data;
+    const libraryDataAnime = await fetchLibraryEntries(userId, "anime");
+    console.log("Fetched anime library data", libraryDataAnime);
+    state.animeMetaData = libraryDataAnime.meta;
+    state.animeLibraryData = libraryDataAnime;
+    const animeCount = libraryDataAnime.meta.count;
+    if (animeCount > LIBRARY_ENTRIES_PAGE_LIMIT) {
+      // TODO: handle more than 500 library entries
+    }
+
+    const libraryDataManga = await fetchLibraryEntries(userId, "manga");
+    console.log("Fetched manga library data", libraryDataManga);
+    state.mangaMetaData = libraryDataManga.meta;
+    state.mangaLibraryData = libraryDataManga;
+    const mangaCount = libraryDataManga.meta.count;
+    if (mangaCount > LIBRARY_ENTRIES_PAGE_LIMIT) {
+      // TODO: handle more than 500 library entries
+    }
+
     return true;
   } catch (error) {
     console.error("Failed to fetch library entries.", error);
@@ -109,10 +125,18 @@ const fetchUserModel = async (userId) => {
   return json;
 };
 
-const fetchLibraryEntries = async (userId) => {
+const fetchLibraryEntries = async (
+  userId,
+  kind,
+  pageOffset = 0,
+  pageLimit = LIBRARY_ENTRIES_PAGE_LIMIT
+) => {
   const url =
     API_URL +
-    `/users/${userId}/library-entries?page[limit]=${LIBRARY_ENTRIES_PAGE_LIMIT}&include=anime,manga&fields[anime]=titles&fields[manga]=titles`;
+    `/library-entries?filter[user_id]=${userId}` +
+    `&filter[kind]=${kind}` +
+    `&page[offset]=${pageOffset}&page[limit]=${pageLimit}` +
+    `&fields[libraryEntries]=ratingTwenty`;
   const response = await fetch(url);
   const json = await response.json();
   if (!response.ok) {
@@ -136,13 +160,15 @@ const fetchLibraryEntries = async (userId) => {
 
     <!-- Library Status -->
     <LibraryMetaCard
-      :library-data="state.libraryData"
+      :anime-meta-data="state.animeMetaData"
+      :manga-meta-data="state.mangaMetaData"
       class="lg:col-span-2 h-[32rem] sm:h-96 lg:min-h-80"
     ></LibraryMetaCard>
 
     <!-- Ratings Given -->
     <RatingsGivenCard
-      :library-data="state.libraryData"
+      :anime-library-data="state.animeLibraryData"
+      :manga-library-data="state.mangaLibraryData"
       class="min-h-[24rem]"
     ></RatingsGivenCard>
 

@@ -11,7 +11,6 @@ import VChart from "vue-echarts";
 import { onBeforeUnmount, onMounted, reactive, ref, watchEffect } from "vue";
 import resolveConfig from "tailwindcss/resolveConfig";
 import tailwindConfig from "tailwind.config.js";
-import { filterLibraryEntriesForType } from "../utils/dataUtils";
 
 use([
   CanvasRenderer,
@@ -21,7 +20,7 @@ use([
   LegendComponent,
 ]);
 
-const props = defineProps(["libraryData"]);
+const props = defineProps(["animeMetaData", "mangaMetaData"]);
 const fullConfig = resolveConfig(tailwindConfig);
 const chart = ref(null);
 
@@ -148,42 +147,38 @@ const option = ref({
   ],
 });
 
-const countStatus = (libraryEntries, status) => {
-  return libraryEntries.filter((e) => e.attributes.status === status).length;
-};
-
-const createChartData = (libraryEntries) => [
+const createChartData = (statusCounts) => [
   {
     name: "Current",
-    value: countStatus(libraryEntries, "current"),
+    value: statusCounts.current,
   },
   {
     name: "Completed",
-    value: countStatus(libraryEntries, "completed"),
+    value: statusCounts.completed,
   },
   {
     name: "Planned",
-    value: countStatus(libraryEntries, "planned"),
+    value: statusCounts.planned,
   },
   {
     name: "Dropped",
-    value: countStatus(libraryEntries, "dropped"),
+    value: statusCounts.dropped,
   },
   {
     name: "On Hold",
-    value: countStatus(libraryEntries, "on_hold"),
+    value: statusCounts.onHold,
   },
 ];
 
 watchEffect(() => {
-  if (!props.libraryData) return;
-  const libraryEntries = props.libraryData.data;
+  if (!props.animeMetaData || !props.mangaMetaData) return;
 
-  const animeEntries = filterLibraryEntriesForType(libraryEntries, "anime");
-  const mangaEntries = filterLibraryEntriesForType(libraryEntries, "manga");
+  const animeStatusCounts = props.animeMetaData.statusCounts;
+  const mangaStatusCounts = props.mangaMetaData.statusCounts;
 
-  const animeChartData = createChartData(animeEntries);
-  const mangaChartData = createChartData(mangaEntries);
+  const animeChartData = createChartData(animeStatusCounts);
+  const mangaChartData = createChartData(mangaStatusCounts);
+
   option.value.series[0].data = animeChartData;
   option.value.series[1].data = mangaChartData;
   state.isLoading = false;
