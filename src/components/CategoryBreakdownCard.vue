@@ -97,6 +97,12 @@ watchEffect(() => {
   for (const categoryKey of categoryKeys) {
     const valueAnime = animeCategories[categoryKey];
     const valueManga = mangaCategories[categoryKey];
+
+    if (!valueAnime && !valueManga) {
+      categoryKeys.delete(categoryKey)
+      continue
+    }
+
     dataAnime.push(valueAnime ? valueAnime : null);
     dataManga.push(valueManga ? valueManga : null);
   }
