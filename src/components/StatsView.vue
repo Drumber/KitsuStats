@@ -10,6 +10,7 @@ import UserInfoCard from "./UserInfoCard.vue";
 import LibraryMetaCard from "./LibraryMetaCard.vue";
 import RatingsGivenCard from "./RatingsGivenCard.vue";
 import CategoryBreakdownCard from "./CategoryBreakdownCard.vue";
+import ProgressBar from "./widgets/ProgressBar.vue";
 
 const props = defineProps({
   userId: {
@@ -34,12 +35,35 @@ const state = reactive({
   animeLibraryData: undefined,
   mangaLibraryData: undefined,
   libraryFetchError: false,
+  showProgressBar: false,
 });
 
 const userAttr = computed(() => {
   const model = state.userModel;
   if (!model) return undefined;
   return model.attributes;
+});
+
+const libraryCountTotal = computed(() => {
+  let count = 0;
+  if (state.animeMetaData) {
+    count += state.animeMetaData.count;
+  }
+  if (state.mangaMetaData) {
+    count += state.mangaMetaData.count;
+  }
+  return count;
+});
+
+const libraryFetchCount = computed(() => {
+  let count = 0;
+  if (state.animeLibraryData) {
+    count += state.animeLibraryData.data.length;
+  }
+  if (state.mangaLibraryData) {
+    count += state.mangaLibraryData.data.length;
+  }
+  return count;
 });
 
 const getNotFoundRouteLocation = (route) => {
@@ -90,12 +114,26 @@ const updateUserModel = async (userId) => {
 
 const updateLibraryEntries = async (userId) => {
   try {
+    // fetch max 500 Anime entries
     const libraryDataAnime = await fetchLibraryEntries(userId, "anime");
     console.log("Fetched anime library data", libraryDataAnime);
     state.animeMetaData = libraryDataAnime.meta;
     state.animeLibraryData = libraryDataAnime;
 
+    // fetch max 500 Manga entries
+    const libraryDataManga = await fetchLibraryEntries(userId, "manga");
+    console.log("Fetched manga library data", libraryDataManga);
+    state.mangaMetaData = libraryDataManga.meta;
+    state.mangaLibraryData = libraryDataManga;
+
     const animeCount = libraryDataAnime.meta.count;
+    const mangaCount = libraryDataManga.meta.count;
+
+    state.showProgressBar =
+      animeCount > LIBRARY_ENTRIES_PAGE_LIMIT ||
+      mangaCount > LIBRARY_ENTRIES_PAGE_LIMIT;
+
+    // handle more than 500 Anime entries
     if (animeCount > LIBRARY_ENTRIES_PAGE_LIMIT) {
       console.log(
         `Library contains more than 500 anime entries (${animeCount}). Fetching all entries...`
@@ -121,17 +159,12 @@ const updateLibraryEntries = async (userId) => {
       } while (fetchCount < animeCount);
     }
 
-    const libraryDataManga = await fetchLibraryEntries(userId, "manga");
-    console.log("Fetched manga library data", libraryDataManga);
-    state.mangaMetaData = libraryDataManga.meta;
-    state.mangaLibraryData = libraryDataManga;
-
-    const mangaCount = libraryDataManga.meta.count;
+    // handle more than 500 Manga entries
     if (mangaCount > LIBRARY_ENTRIES_PAGE_LIMIT) {
       console.log(
         `Library contains more than 500 manga entries (${mangaCount}). Fetching all entries...`
       );
-      
+
       let fetchCount = libraryDataManga.data.length;
       do {
         const pageSize = Math.min(
@@ -156,6 +189,8 @@ const updateLibraryEntries = async (userId) => {
   } catch (error) {
     console.error("Failed to fetch library entries.", error);
     return false;
+  } finally {
+    state.showProgressBar = false;
   }
 };
 
@@ -191,7 +226,14 @@ const fetchLibraryEntries = async (
 </script>
 
 <template>
-  <AppHeader></AppHeader>
+  <AppHeader>
+    <ProgressBar
+      :value="libraryFetchCount"
+      :max="libraryCountTotal"
+      :class="{ '!opacity-100': state.showProgressBar }"
+      class="absolute bottom-0 z-20 opacity-0 transition-all duration-500 delay-100"
+    ></ProgressBar>
+  </AppHeader>
   <div
     v-if="state.userModel !== undefined"
     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-6xl p-2"
