@@ -6,11 +6,12 @@ import { API_URL, LIBRARY_ENTRIES_PAGE_LIMIT } from "../constants";
 import { useStore } from "../store";
 import { THEME_KEY } from "vue-echarts";
 import AppHeader from "./widgets/AppHeader.vue";
-import UserInfoCard from "./UserInfoCard.vue";
-import LibraryMetaCard from "./LibraryMetaCard.vue";
-import RatingsGivenCard from "./RatingsGivenCard.vue";
-import CategoryBreakdownCard from "./CategoryBreakdownCard.vue";
+import UserInfoCard from "./cards/UserInfoCard.vue";
+import LibraryMetaCard from "./cards/LibraryMetaCard.vue";
+import RatingsGivenCard from "./cards/RatingsGivenCard.vue";
+import CategoryBreakdownCard from "./cards/CategoryBreakdownCard.vue";
 import ProgressBar from "./widgets/ProgressBar.vue";
+import ProgressedHeatmapCard from "./cards/ProgressedHeatmapCard.vue";
 
 const props = defineProps({
   userId: {
@@ -37,6 +38,17 @@ const state = reactive({
   libraryFetchError: false,
   showProgressBar: false,
   isLoading: true,
+});
+
+const combinedLibraryEntries = computed(() => {
+  const combined = [];
+  if (state.animeLibraryData) {
+    combined.push(...state.animeLibraryData.data);
+  }
+  if (state.mangaLibraryData) {
+    combined.push(...state.mangaLibraryData.data);
+  }
+  return combined.length > 0 ? combined : undefined;
 });
 
 const userAttr = computed(() => {
@@ -218,7 +230,7 @@ const fetchLibraryEntries = async (
     `/library-entries?filter[user_id]=${userId}` +
     `&filter[kind]=${kind}` +
     `&page[offset]=${pageOffset}&page[limit]=${pageLimit}` +
-    `&fields[libraryEntries]=ratingTwenty`;
+    `&fields[libraryEntries]=ratingTwenty,progressedAt`;
   const response = await fetch(url);
   const json = await response.json();
   if (!response.ok) {
@@ -268,10 +280,11 @@ const fetchLibraryEntries = async (
       class="lg:col-span-2 h-[38rem]"
     ></CategoryBreakdownCard>
 
-    <!-- Library Statistics -->
-    <div class="col-start-1 md:col-span-2 lg:col-span-3 card">
-      <h1 class="text-2xl mb-1 font-semibold">Timeline</h1>
-    </div>
+    <!-- Progressed Heatmap -->
+    <ProgressedHeatmapCard
+      :library-entries="combinedLibraryEntries"
+      class="col-start-1 md:col-span-2 lg:col-span-3 h-80"
+    ></ProgressedHeatmapCard>
 
     <p>Note: NSFW Content is ignored in all statistics.</p>
   </div>

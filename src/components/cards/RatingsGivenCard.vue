@@ -5,7 +5,7 @@ import VChart from "vue-echarts";
 import { CanvasRenderer } from "echarts/renderers";
 import { LegendComponent } from "echarts/components";
 import { RadarChart } from "echarts/charts";
-import DropdownMenu from "./widgets/DropdownMenu.vue";
+import DropdownMenu from "../widgets/DropdownMenu.vue";
 
 use([CanvasRenderer, RadarChart, LegendComponent]);
 
