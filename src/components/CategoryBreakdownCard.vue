@@ -99,8 +99,8 @@ watchEffect(() => {
     const valueManga = mangaCategories[categoryKey];
 
     if (!valueAnime && !valueManga) {
-      categoryKeys.delete(categoryKey)
-      continue
+      categoryKeys.delete(categoryKey);
+      continue;
     }
 
     dataAnime.push(valueAnime ? valueAnime : null);

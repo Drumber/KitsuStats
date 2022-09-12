@@ -94,18 +94,62 @@ const updateLibraryEntries = async (userId) => {
     console.log("Fetched anime library data", libraryDataAnime);
     state.animeMetaData = libraryDataAnime.meta;
     state.animeLibraryData = libraryDataAnime;
+
     const animeCount = libraryDataAnime.meta.count;
     if (animeCount > LIBRARY_ENTRIES_PAGE_LIMIT) {
-      // TODO: handle more than 500 library entries
+      console.log(
+        `Library contains more than 500 anime entries (${animeCount}). Fetching all entries...`
+      );
+
+      let fetchCount = libraryDataAnime.data.length;
+      do {
+        const pageSize = Math.min(
+          LIBRARY_ENTRIES_PAGE_LIMIT,
+          animeCount - fetchCount
+        );
+        const pageOffset = fetchCount;
+        console.debug(`offset: ${pageOffset} size: ${pageSize}`);
+
+        const response = await fetchLibraryEntries(
+          userId,
+          "anime",
+          pageOffset,
+          pageSize
+        );
+        state.animeLibraryData.data.push(...response.data);
+        fetchCount += response.data.length;
+      } while (fetchCount < animeCount);
     }
 
     const libraryDataManga = await fetchLibraryEntries(userId, "manga");
     console.log("Fetched manga library data", libraryDataManga);
     state.mangaMetaData = libraryDataManga.meta;
     state.mangaLibraryData = libraryDataManga;
+
     const mangaCount = libraryDataManga.meta.count;
     if (mangaCount > LIBRARY_ENTRIES_PAGE_LIMIT) {
-      // TODO: handle more than 500 library entries
+      console.log(
+        `Library contains more than 500 manga entries (${mangaCount}). Fetching all entries...`
+      );
+      
+      let fetchCount = libraryDataManga.data.length;
+      do {
+        const pageSize = Math.min(
+          LIBRARY_ENTRIES_PAGE_LIMIT,
+          mangaCount - fetchCount
+        );
+        const pageOffset = fetchCount;
+        console.debug(`offset: ${pageOffset} size: ${pageSize}`);
+
+        const response = await fetchLibraryEntries(
+          userId,
+          "manga",
+          pageOffset,
+          pageSize
+        );
+        state.mangaLibraryData.data.push(...response.data);
+        fetchCount += response.data.length;
+      } while (fetchCount < mangaCount);
     }
 
     return true;
