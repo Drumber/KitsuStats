@@ -36,6 +36,7 @@ const state = reactive({
   mangaLibraryData: undefined,
   libraryFetchError: false,
   showProgressBar: false,
+  isLoading: true,
 });
 
 const userAttr = computed(() => {
@@ -78,14 +79,15 @@ const getNotFoundRouteLocation = (route) => {
 
 onBeforeRouteUpdate(async (to, from) => {
   if (to.params.userId === from.params.userId) return;
+  state.isLoading = true;
 
   const userId = to.params.userId;
-  console.log("route update", userId);
   const isUserModelSet = await updateUserModel(userId);
   if (!isUserModelSet) {
     return getNotFoundRouteLocation(to);
   }
   state.libraryFetchError = !(await updateLibraryEntries(userId));
+  state.isLoading = false;
   return true;
 });
 
@@ -96,6 +98,7 @@ onMounted(async () => {
     return;
   }
   state.libraryFetchError = !(await updateLibraryEntries(props.userId));
+  state.isLoading = false;
 });
 
 const updateUserModel = async (userId) => {
@@ -255,6 +258,7 @@ const fetchLibraryEntries = async (
     <RatingsGivenCard
       :anime-library-data="state.animeLibraryData"
       :manga-library-data="state.mangaLibraryData"
+      :is-loading="state.isLoading"
       class="min-h-[24rem]"
     ></RatingsGivenCard>
 

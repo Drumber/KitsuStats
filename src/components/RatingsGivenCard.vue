@@ -9,14 +9,27 @@ import DropdownMenu from "./widgets/DropdownMenu.vue";
 
 use([CanvasRenderer, RadarChart, LegendComponent]);
 
-const props = defineProps(["animeLibraryData", "mangaLibraryData"]);
+const props = defineProps([
+  "animeLibraryData",
+  "mangaLibraryData",
+  "isLoading",
+]);
 
 const state = reactive({
   isLoading: true,
   ratingSystem: "regular",
 });
 
+let userChangedRatingSystem = false;
+
+watchEffect(() => {
+  if (props.isLoading === true) {
+    userChangedRatingSystem = false;
+  }
+});
+
 const setRatingSystem = (ratingSystem) => {
+  userChangedRatingSystem = true;
   state.ratingSystem = ratingSystem;
 };
 
@@ -67,14 +80,55 @@ const createIndicators = (maxValue, size, stepSize) => {
   return indicators;
 };
 
+const detectRatingSystem = (libraryEntries) => {
+  const ratingsCounts = createChartData(libraryEntries, 20, 1, (x) => x);
+
+  let advanceUniqueRatingsCount = 0;
+  let regularUniqueRatingsCount = 0;
+
+  for (let i = 0; i < ratingsCounts.length; i++) {
+    const ratingCount = ratingsCounts[i];
+    const rating = i + 1;
+
+    // unique advance ratings: 1, 3, 5, 7, 9, 11, 13, 15, 17, 19 (=> odd numbers)
+    if (rating % 2 === 1) {
+      advanceUniqueRatingsCount += ratingCount;
+    }
+
+    // unique regular ratings: 1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19 (=> not a multiple of 5)
+    if (rating % 5 !== 0) {
+      regularUniqueRatingsCount += ratingCount;
+    }
+  }
+
+  const threshold = 4;
+  if (advanceUniqueRatingsCount > threshold) {
+    return "advance";
+  } else if (regularUniqueRatingsCount > threshold) {
+    return "regular";
+  }
+  return "simple";
+};
+
 watchEffect(() => {
   if (!props.animeLibraryData || !props.mangaLibraryData) return;
 
   const animeEntries = props.animeLibraryData.data;
   const mangaEntries = props.mangaLibraryData.data;
 
-  // TODO: auto detect rating system based on values
+  // auto detect rating system
+  if (userChangedRatingSystem === false) {
+    const detectedRatingSystem = detectRatingSystem([
+      ...animeEntries,
+      ...mangaEntries,
+    ]);
+    if (state.ratingSystem !== detectRatingSystem) {
+      state.ratingSystem = detectedRatingSystem;
+    }
+  }
+
   const ratingSystem = state.ratingSystem;
+
   // default: advanced rating (20)
   let size = 10;
   let stepSize = 0.5;
