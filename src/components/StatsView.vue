@@ -12,6 +12,7 @@ import RatingsGivenCard from "./cards/RatingsGivenCard.vue";
 import CategoryBreakdownCard from "./cards/CategoryBreakdownCard.vue";
 import ProgressBar from "./widgets/ProgressBar.vue";
 import ProgressedHeatmapCard from "./cards/ProgressedHeatmapCard.vue";
+import moment from "moment";
 
 const props = defineProps({
   userId: {
@@ -35,20 +36,12 @@ const state = reactive({
   mangaMetaData: undefined,
   animeLibraryData: undefined,
   mangaLibraryData: undefined,
-  libraryFetchError: false,
-  showProgressBar: false,
+  libraryEventsMetaData: undefined,
+  libraryEvents: undefined,
+  libraryEventsFirstYear: undefined,
   isLoading: true,
-});
-
-const combinedLibraryEntries = computed(() => {
-  const combined = [];
-  if (state.animeLibraryData) {
-    combined.push(...state.animeLibraryData.data);
-  }
-  if (state.mangaLibraryData) {
-    combined.push(...state.mangaLibraryData.data);
-  }
-  return combined.length > 0 ? combined : undefined;
+  isFetchingLibraryEntries: false,
+  isFetchingLibraryEvents: false,
 });
 
 const userAttr = computed(() => {
@@ -57,26 +50,24 @@ const userAttr = computed(() => {
   return model.attributes;
 });
 
-const libraryCountTotal = computed(() => {
+const libraryLoadingTotal = computed(() => {
   let count = 0;
-  if (state.animeMetaData) {
-    count += state.animeMetaData.count;
-  }
-  if (state.mangaMetaData) {
-    count += state.mangaMetaData.count;
-  }
+  count += state.animeMetaData ? state.animeMetaData.count : 0;
+  count += state.mangaMetaData ? state.mangaMetaData.count : 0;
+  count += state.libraryEventsMetaData ? state.libraryEventsMetaData.count : 0;
   return count;
 });
 
-const libraryFetchCount = computed(() => {
+const libraryLoadingProgress = computed(() => {
   let count = 0;
-  if (state.animeLibraryData) {
-    count += state.animeLibraryData.data.length;
-  }
-  if (state.mangaLibraryData) {
-    count += state.mangaLibraryData.data.length;
-  }
+  count += state.animeLibraryData ? state.animeLibraryData.data.length : 0;
+  count += state.mangaLibraryData ? state.mangaLibraryData.data.length : 0;
+  count += state.libraryEvents ? state.libraryEvents.length : 0;
   return count;
+});
+
+const showProgressBar = computed(() => {
+  return state.isFetchingLibraryEntries || state.isFetchingLibraryEvents;
 });
 
 const getNotFoundRouteLocation = (route) => {
@@ -91,6 +82,18 @@ const getNotFoundRouteLocation = (route) => {
 
 onBeforeRouteUpdate(async (to, from) => {
   if (to.params.userId === from.params.userId) return;
+
+  // clear old state data
+  state.userModel = undefined;
+  state.userStats = undefined;
+  state.animeMetaData = undefined;
+  state.mangaMetaData = undefined;
+  state.animeLibraryData = undefined;
+  state.mangaLibraryData = undefined;
+  state.libraryEventsMetaData = undefined;
+  state.libraryEvents = undefined;
+  state.libraryEventsFirstYear = undefined;
+
   state.isLoading = true;
 
   const userId = to.params.userId;
@@ -98,7 +101,7 @@ onBeforeRouteUpdate(async (to, from) => {
   if (!isUserModelSet) {
     return getNotFoundRouteLocation(to);
   }
-  state.libraryFetchError = !(await updateLibraryEntries(userId));
+  await updateLibraryData(userId);
   state.isLoading = false;
   return true;
 });
@@ -109,7 +112,7 @@ onMounted(async () => {
     router.push(getNotFoundRouteLocation(route));
     return;
   }
-  state.libraryFetchError = !(await updateLibraryEntries(props.userId));
+  await updateLibraryData(props.userId);
   state.isLoading = false;
 });
 
@@ -127,7 +130,14 @@ const updateUserModel = async (userId) => {
   }
 };
 
+const updateLibraryData = async (userId) => {
+  await updateLibraryEntries(userId);
+  const currentYear = new Date().getFullYear();
+  await updateLibraryEvents(userId, currentYear);
+};
+
 const updateLibraryEntries = async (userId) => {
+  state.isFetchingLibraryEntries = true;
   try {
     // fetch max 500 Anime entries
     const libraryDataAnime = await fetchLibraryEntries(userId, "anime");
@@ -141,14 +151,8 @@ const updateLibraryEntries = async (userId) => {
     state.mangaMetaData = libraryDataManga.meta;
     state.mangaLibraryData = libraryDataManga;
 
-    const animeCount = libraryDataAnime.meta.count;
-    const mangaCount = libraryDataManga.meta.count;
-
-    state.showProgressBar =
-      animeCount > LIBRARY_ENTRIES_PAGE_LIMIT ||
-      mangaCount > LIBRARY_ENTRIES_PAGE_LIMIT;
-
     // handle more than 500 Anime entries
+    const animeCount = libraryDataAnime.meta.count;
     if (animeCount > LIBRARY_ENTRIES_PAGE_LIMIT) {
       console.log(
         `Library contains more than 500 anime entries (${animeCount}). Fetching all entries...`
@@ -161,7 +165,7 @@ const updateLibraryEntries = async (userId) => {
           animeCount - fetchCount
         );
         const pageOffset = fetchCount;
-        console.debug(`offset: ${pageOffset} size: ${pageSize}`);
+        console.debug(`[Anime] offset: ${pageOffset} size: ${pageSize}`);
 
         const response = await fetchLibraryEntries(
           userId,
@@ -175,6 +179,7 @@ const updateLibraryEntries = async (userId) => {
     }
 
     // handle more than 500 Manga entries
+    const mangaCount = libraryDataManga.meta.count;
     if (mangaCount > LIBRARY_ENTRIES_PAGE_LIMIT) {
       console.log(
         `Library contains more than 500 manga entries (${mangaCount}). Fetching all entries...`
@@ -187,7 +192,7 @@ const updateLibraryEntries = async (userId) => {
           mangaCount - fetchCount
         );
         const pageOffset = fetchCount;
-        console.debug(`offset: ${pageOffset} size: ${pageSize}`);
+        console.debug(`[Manga] offset: ${pageOffset} size: ${pageSize}`);
 
         const response = await fetchLibraryEntries(
           userId,
@@ -199,14 +204,107 @@ const updateLibraryEntries = async (userId) => {
         fetchCount += response.data.length;
       } while (fetchCount < mangaCount);
     }
-
-    return true;
   } catch (error) {
     console.error("Failed to fetch library entries.", error);
-    return false;
   } finally {
-    state.showProgressBar = false;
+    state.isFetchingLibraryEntries = false;
   }
+};
+
+const updateLibraryEvents = async (userId, year) => {
+  state.isFetchingLibraryEvents = true;
+  try {
+    let fetchedCount = state.libraryEvents ? state.libraryEvents.length : 0;
+    let totalCount = state.libraryEventsMetaData
+      ? state.libraryEventsMetaData.count
+      : Number.MAX_VALUE;
+
+    if (
+      state.libraryEventsMetaData &&
+      fetchedCount >= state.libraryEventsMetaData.count
+    ) {
+      console.log("All library events are already fetched.");
+      return;
+    }
+
+    const yearBoundary = year - 1;
+
+    if (fetchedCount > 0) {
+      const firstCreatedAt =
+        state.libraryEvents[fetchedCount - 1].attributes.createdAt;
+      const firstFetchedYear = moment(firstCreatedAt).year();
+      if (firstFetchedYear < yearBoundary) {
+        console.debug(
+          `Library events for year ${year} should be already fetched. No need to fetch again...`
+        );
+        return;
+      }
+    }
+
+    console.log(
+      `Starting fetching library events until year ${yearBoundary}...`
+    );
+
+    do {
+      const pageSize = Math.min(20, totalCount - fetchedCount);
+      const pageOffset = fetchedCount;
+      //console.debug(`[LibraryEvents] offset: ${pageOffset} size: ${pageSize}`);
+
+      const response = await fetchLibraryEvents(userId, pageOffset, pageSize);
+
+      if (!state.libraryEventsMetaData) {
+        state.libraryEventsMetaData = response.meta;
+      }
+
+      totalCount = response.meta.count;
+
+      if (!state.libraryEvents) {
+        state.libraryEvents = response.data;
+      } else {
+        state.libraryEvents.push(...response.data);
+      }
+      fetchedCount += response.data.length;
+
+      const lastCreatedAt =
+        response.data[response.data.length - 1].attributes.createdAt;
+      const lastYear = moment(lastCreatedAt).year();
+      if (lastYear <= yearBoundary) {
+        console.debug(
+          `Reached year boundary. Last fetched year: ${lastYear} Boundary: ${yearBoundary}`
+        );
+        break;
+      }
+    } while (fetchedCount < totalCount);
+
+    if (!state.libraryEventsFirstYear && state.libraryEventsMetaData) {
+      // set the year of the first library event
+      if (state.libraryEventsMetaData.count < 20 && state.libraryEvents) {
+        const length = state.libraryEvents.length;
+        if (length > 0) {
+          const createdAt =
+            state.libraryEvents[length - 1].attributes.createdAt;
+          state.libraryEventsFirstYear = moment(createdAt).year();
+        }
+      } else {
+        // try to fetch first library event
+        const lastPage = state.libraryEventsMetaData.count - 1;
+        const response = await fetchLibraryEvents(userId, lastPage, 1);
+        const createdAt =
+          response.data[response.data.length - 1].attributes.createdAt;
+        state.libraryEventsFirstYear = moment(createdAt).year();
+      }
+    }
+  } catch (error) {
+    console.error("Failed to fetch library events.", error);
+  } finally {
+    state.isFetchingLibraryEvents = false;
+  }
+};
+
+const provideLibraryEventsForYear = async (year) => {
+  const userId = props.userId;
+  if (!userId) return;
+  await updateLibraryEvents(userId, year);
 };
 
 const fetchUserModel = async (userId) => {
@@ -230,8 +328,29 @@ const fetchLibraryEntries = async (
     `/library-entries?filter[user_id]=${userId}` +
     `&filter[kind]=${kind}` +
     `&page[offset]=${pageOffset}&page[limit]=${pageLimit}` +
-    `&fields[libraryEntries]=ratingTwenty,progressedAt`;
-  const response = await fetch(url);
+    `&fields[libraryEntries]=ratingTwenty`;
+  const response = await fetch(url, { cache: "force-cache" });
+  const json = await response.json();
+  if (!response.ok) {
+    throw Error(JSON.stringify(json));
+  }
+  return json;
+};
+
+const fetchLibraryEvents = async (
+  userId,
+  pageOffset = 0,
+  pageLimit = 20,
+  kind = "progressed"
+) => {
+  const url =
+    API_URL +
+    `/library-events?filter[user_id]=${userId}` +
+    `&filter[kind]=${kind}` +
+    `&page[offset]=${pageOffset}&page[limit]=${pageLimit}` +
+    `&fields[libraryEvents]=createdAt` +
+    `&sort=-createdAt`;
+  const response = await fetch(url, { cache: "force-cache" });
   const json = await response.json();
   if (!response.ok) {
     throw Error(JSON.stringify(json));
@@ -243,9 +362,9 @@ const fetchLibraryEntries = async (
 <template>
   <AppHeader>
     <ProgressBar
-      :value="libraryFetchCount"
-      :max="libraryCountTotal"
-      :class="{ '!opacity-100': state.showProgressBar }"
+      :value="libraryLoadingProgress"
+      :max="libraryLoadingTotal"
+      :class="{ '!opacity-100': showProgressBar }"
       class="absolute bottom-0 z-20 opacity-0 transition-all duration-500 delay-100"
     ></ProgressBar>
   </AppHeader>
@@ -282,7 +401,9 @@ const fetchLibraryEntries = async (
 
     <!-- Progressed Heatmap -->
     <ProgressedHeatmapCard
-      :library-entries="combinedLibraryEntries"
+      :library-events="state.libraryEvents"
+      :library-events-first-year="state.libraryEventsFirstYear"
+      @update:progress-heatmap-year="provideLibraryEventsForYear"
       class="col-start-1 md:col-span-2 lg:col-span-3 h-80"
     ></ProgressedHeatmapCard>
 

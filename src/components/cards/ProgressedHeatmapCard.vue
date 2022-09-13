@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from "vue";
 import { HeatmapChart } from "echarts/charts";
 import {
   CalendarComponent,
@@ -20,22 +21,36 @@ use([
   TooltipComponent,
 ]);
 
-const props = defineProps(["libraryEntries"]);
+const props = defineProps(["libraryEvents", "libraryEventsFirstYear"]);
+const emit = defineEmits(["update:progressHeatmapYear"]);
+
+const currentYear = new Date().getFullYear();
 
 const state = reactive({
   isLoading: true,
-  selectedYear: new Date().getFullYear(),
-  allYears: [],
+  selectedYear: currentYear,
+});
+
+const availableYears = computed(() => {
+  const years = [currentYear];
+  const firstYear = props.libraryEventsFirstYear;
+  if (firstYear && firstYear < currentYear) {
+    for (let year = currentYear - 1; year >= firstYear; year--) {
+      years.push(year);
+    }
+  }
+  return years;
 });
 
 const selectYear = (year) => {
   state.selectedYear = year;
+  emit("update:progressHeatmapYear", year);
 };
 
 const option = ref({
   backgroundColor: "rgba(0, 0, 0, 0)",
   tooltip: {
-    position: "top",
+    //position: "top",
     formatter: function (x) {
       const format = moment(x.data[0]).format("LL");
       return `<b>${x.data[1]} progressed</b><br/>on ${format}`;
@@ -68,20 +83,18 @@ const option = ref({
   },
 });
 
-const createHeatmapData = (libraryEntries, year) => {
+const createHeatmapData = (libraryEvents, year) => {
   const progressedAtDayCounts = {};
 
-  const allYears = new Set();
   let maxCount = 1;
 
-  for (const entry of libraryEntries) {
-    const progressedAt = entry.attributes.progressedAt;
-    if (!progressedAt) {
+  for (const event of libraryEvents) {
+    const createdAt = event.attributes.createdAt;
+    if (!createdAt) {
       continue;
     }
-    const date = moment(progressedAt);
+    const date = moment(createdAt);
 
-    allYears.add(date.year());
     if (date.year() !== year) {
       continue;
     }
@@ -97,19 +110,18 @@ const createHeatmapData = (libraryEntries, year) => {
   for (const [date, count] of Object.entries(progressedAtDayCounts)) {
     data.push([date, count]);
   }
-  return { data, maxCount, allYears };
+  return { data, maxCount };
 };
 
 watchEffect(() => {
-  if (!props.libraryEntries) return;
+  if (!props.libraryEvents) return;
 
   const year = state.selectedYear;
-  const heatmapData = createHeatmapData(props.libraryEntries, year);
+  const heatmapData = createHeatmapData(props.libraryEvents, year);
 
   option.value.visualMap.max = heatmapData.maxCount;
   option.value.calendar.range = year.toString();
   option.value.series.data = heatmapData.data;
-  state.allYears = [...heatmapData.allYears].sort().reverse();
   state.isLoading = false;
 });
 </script>
@@ -124,52 +136,26 @@ watchEffect(() => {
           :autoresize="true"
           :loading="state.isLoading"
         />
-
-        <div class="absolute bottom-7 left-10 flex items-center">
-          <DropdownMenu
-            :position="'tl'"
-            :hover="true"
-            class="mr-2 fill-gray-700 dark:fill-gray-300"
+        <DropdownMenu :position="'tl'" class="absolute bottom-7 left-10">
+          <button
+            class="px-3 py-0.5 bg-background-100/30 dark:bg-background-500/30 rounded-md"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 48 48"
-              height="20"
-              width="20"
-            >
-              <path
-                d="M22.65 34h3V22h-3ZM24 18.3q.7 0 1.175-.45.475-.45.475-1.15t-.475-1.2Q24.7 15 24 15q-.7 0-1.175.5-.475.5-.475 1.2t.475 1.15q.475.45 1.175.45ZM24 44q-4.1 0-7.75-1.575-3.65-1.575-6.375-4.3-2.725-2.725-4.3-6.375Q4 28.1 4 23.95q0-4.1 1.575-7.75 1.575-3.65 4.3-6.35 2.725-2.7 6.375-4.275Q19.9 4 24.05 4q4.1 0 7.75 1.575 3.65 1.575 6.35 4.275 2.7 2.7 4.275 6.35Q44 19.85 44 24q0 4.1-1.575 7.75-1.575 3.65-4.275 6.375t-6.35 4.3Q28.15 44 24 44Zm.05-3q7.05 0 12-4.975T41 23.95q0-7.05-4.95-12T24 7q-7.05 0-12.025 4.95Q7 16.9 7 24q0 7.05 4.975 12.025Q16.95 41 24.05 41ZM24 24Z"
-              />
-            </svg>
-            <template v-slot:menu>
-              <p class="break-words w-52 sm:w-auto">
-                The statistics include only the last day a library entry was
-                progressed.
-              </p>
-            </template>
-          </DropdownMenu>
-
-          <DropdownMenu :position="'tl'">
-            <button
-              class="px-3 py-0.5 bg-background-100/30 dark:bg-background-500/30 rounded-md"
-            >
-              {{ state.selectedYear }}
-            </button>
-            <template v-slot:menu>
-              <h1 class="font-semibold mb-1">Select Year</h1>
-              <ul class="overflow-y-auto max-h-40">
-                <li v-for="year in state.allYears" :key="year">
-                  <button
-                    @click="selectYear(year)"
-                    :class="{ selected: state.selectedYear == year }"
-                  >
-                    {{ year }}
-                  </button>
-                </li>
-              </ul>
-            </template>
-          </DropdownMenu>
-        </div>
+            {{ state.selectedYear }}
+          </button>
+          <template v-slot:menu>
+            <h1 class="font-semibold mb-1">Select Year</h1>
+            <ul class="overflow-y-auto max-h-40">
+              <li v-for="year in availableYears" :key="year">
+                <button
+                  @click="selectYear(year)"
+                  :class="{ selected: state.selectedYear == year }"
+                >
+                  {{ year }}
+                </button>
+              </li>
+            </ul>
+          </template>
+        </DropdownMenu>
       </div>
     </div>
   </div>
