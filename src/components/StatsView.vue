@@ -406,8 +406,6 @@ const fetchLibraryEvents = async (
       @update:progress-heatmap-year="provideLibraryEventsForYear"
       class="col-start-1 md:col-span-2 lg:col-span-3 h-80"
     ></ProgressedHeatmapCard>
-
-    <p>Note: NSFW Content is ignored in all statistics.</p>
   </div>
 </template>
 

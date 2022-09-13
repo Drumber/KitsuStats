@@ -42,7 +42,7 @@ const searchUsers = (query) => {
       state.searchResults = hits;
       state.selectedUser = hits[0] ? hits[0] : undefined;
     });
-  }, 300);
+  }, 200);
 };
 
 const previewUserForId = (userId) => {
