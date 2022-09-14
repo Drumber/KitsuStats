@@ -13,6 +13,7 @@ import CategoryBreakdownCard from "./cards/CategoryBreakdownCard.vue";
 import ProgressBar from "./widgets/ProgressBar.vue";
 import ProgressedHeatmapCard from "./cards/ProgressedHeatmapCard.vue";
 import moment from "moment";
+import AnimeSubtypeCard from "./cards/AnimeSubtypeCard.vue";
 
 const props = defineProps({
   userId: {
@@ -174,6 +175,7 @@ const updateLibraryEntries = async (userId) => {
           pageSize
         );
         state.animeLibraryData.data.push(...response.data);
+        state.animeLibraryData.included.push(...response.included);
         fetchCount += response.data.length;
       } while (fetchCount < animeCount);
     }
@@ -201,6 +203,7 @@ const updateLibraryEntries = async (userId) => {
           pageSize
         );
         state.mangaLibraryData.data.push(...response.data);
+        state.mangaLibraryData.included.push(...response.included);
         fetchCount += response.data.length;
       } while (fetchCount < mangaCount);
     }
@@ -328,7 +331,10 @@ const fetchLibraryEntries = async (
     `/library-entries?filter[user_id]=${userId}` +
     `&filter[kind]=${kind}` +
     `&page[offset]=${pageOffset}&page[limit]=${pageLimit}` +
-    `&fields[libraryEntries]=ratingTwenty`;
+    `&fields[libraryEntries]=ratingTwenty` +
+    `&fields[${kind}]=canonicalTitle` +
+    (kind === "anime" ? `,showType` : "") +
+    `&include=${kind}`;
   const response = await fetch(url, { cache: "force-cache" });
   const json = await response.json();
   if (!response.ok) {
@@ -406,5 +412,11 @@ const fetchLibraryEvents = async (
       @update:progress-heatmap-year="provideLibraryEventsForYear"
       class="col-start-1 md:col-span-2 lg:col-span-3 h-80"
     ></ProgressedHeatmapCard>
+
+    <!-- Anime Subtypes -->
+    <AnimeSubtypeCard
+      :anime-library-data="state.animeLibraryData"
+      class="col-span-1 h-96"
+    ></AnimeSubtypeCard>
   </div>
 </template>
