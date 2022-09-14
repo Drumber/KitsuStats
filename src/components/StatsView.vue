@@ -15,6 +15,7 @@ import LibraryProgressCard from "./cards/LibraryProgressCard.vue";
 import moment from "moment";
 import AnimeSubtypeCard from "./cards/AnimeSubtypeCard.vue";
 import MediaYearsCard from "./cards/MediaYearsCard.vue";
+import TimeSpentHistoryCard from "./cards/TimeSpentHistoryCard.vue";
 
 const props = defineProps({
   userId: {
@@ -337,9 +338,9 @@ const fetchLibraryEntries = async (
     `/library-entries?filter[user_id]=${userId}` +
     `&filter[kind]=${kind}` +
     `&page[offset]=${pageOffset}&page[limit]=${pageLimit}` +
-    `&fields[libraryEntries]=ratingTwenty` +
+    `&fields[libraryEntries]=ratingTwenty,progress,finishedAt,progressedAt,${kind}` +
     `&fields[${kind}]=canonicalTitle,startDate` +
-    (kind === "anime" ? `,showType` : "") +
+    (kind === "anime" ? `,showType,episodeLength` : "") +
     `&include=${kind}`;
   const response = await fetch(url, { cache: "force-cache" });
   const json = await response.json();
@@ -434,5 +435,12 @@ const fetchLibraryEvents = async (
       :manga-library-data="state.mangaLibraryData"
       class="lg:col-span-2 h-96"
     ></MediaYearsCard>
+
+    <!-- Time Spent History -->
+    <TimeSpentHistoryCard
+      :anime-library-data="state.animeLibraryData"
+      :manga-library-data="state.mangaLibraryData"
+      class="lg:col-span-2 h-96"
+    ></TimeSpentHistoryCard>
   </div>
 </template>
