@@ -20,7 +20,6 @@ onMounted(async () => {
   console.log("Init search index");
   if (awaitingSearch) {
     searchUsers(awaitingSearch);
-    awaitingSearch = undefined;
   }
 });
 
@@ -38,6 +37,7 @@ const searchUsers = (query) => {
       awaitingSearch = query;
       return;
     }
+    awaitingSearch = undefined;
     searchIndex.search(query, { hitsPerPage: 10 }).then(({ hits }) => {
       state.searchResults = hits;
       state.selectedUser = hits[0] ? hits[0] : undefined;
