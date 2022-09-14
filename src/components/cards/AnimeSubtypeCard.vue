@@ -48,7 +48,7 @@ const option = ref({
 watchEffect(() => {
   if (!props.animeLibraryData) return;
 
-  const includedAnime = props.animeLibraryData.included;
+  const includedAnime = props.animeLibraryData.included || [];
 
   const showTypeCounts = {};
 

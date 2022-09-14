@@ -11,9 +11,10 @@ import LibraryMetaCard from "./cards/LibraryMetaCard.vue";
 import RatingsGivenCard from "./cards/RatingsGivenCard.vue";
 import CategoryBreakdownCard from "./cards/CategoryBreakdownCard.vue";
 import ProgressBar from "./widgets/ProgressBar.vue";
-import ProgressedHeatmapCard from "./cards/ProgressedHeatmapCard.vue";
+import LibraryProgressCard from "./cards/LibraryProgressCard.vue";
 import moment from "moment";
 import AnimeSubtypeCard from "./cards/AnimeSubtypeCard.vue";
+import MediaYearsCard from "./cards/MediaYearsCard.vue";
 
 const props = defineProps({
   userId: {
@@ -268,6 +269,11 @@ const updateLibraryEvents = async (userId, year) => {
       }
       fetchedCount += response.data.length;
 
+      if (totalCount < 1) {
+        console.debug("User has no library events.");
+        break;
+      }
+
       const lastCreatedAt =
         response.data[response.data.length - 1].attributes.createdAt;
       const lastYear = moment(lastCreatedAt).year();
@@ -332,7 +338,7 @@ const fetchLibraryEntries = async (
     `&filter[kind]=${kind}` +
     `&page[offset]=${pageOffset}&page[limit]=${pageLimit}` +
     `&fields[libraryEntries]=ratingTwenty` +
-    `&fields[${kind}]=canonicalTitle` +
+    `&fields[${kind}]=canonicalTitle,startDate` +
     (kind === "anime" ? `,showType` : "") +
     `&include=${kind}`;
   const response = await fetch(url, { cache: "force-cache" });
@@ -408,18 +414,25 @@ const fetchLibraryEvents = async (
       class="lg:col-span-2 h-[38rem]"
     ></CategoryBreakdownCard>
 
-    <!-- Progressed Heatmap -->
-    <ProgressedHeatmapCard
+    <!-- Library Progress -->
+    <LibraryProgressCard
       :library-events="state.libraryEvents"
       :library-events-first-year="state.libraryEventsFirstYear"
       @update:progress-heatmap-year="provideLibraryEventsForYear"
       class="col-start-1 md:col-span-2 lg:col-span-3 h-80"
-    ></ProgressedHeatmapCard>
+    ></LibraryProgressCard>
 
     <!-- Anime Subtypes -->
     <AnimeSubtypeCard
       :anime-library-data="state.animeLibraryData"
       class="col-span-1 h-96"
     ></AnimeSubtypeCard>
+
+    <!-- Media Years -->
+    <MediaYearsCard
+      :anime-library-data="state.animeLibraryData"
+      :manga-library-data="state.mangaLibraryData"
+      class="lg:col-span-2 h-96"
+    ></MediaYearsCard>
   </div>
 </template>
