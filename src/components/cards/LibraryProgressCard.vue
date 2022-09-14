@@ -184,6 +184,17 @@ const createLineData = (libraryEvents, year) => {
     progressedAtMonths[month] = prevValue + 1;
   }
 
+  // fill '0' between valid data points to get a continuous line
+  const firstDataIndex = progressedAtMonths.findIndex((x) => x !== undefined);
+  const lastDataIndex = progressedAtMonths.findLastIndex(
+    (x) => x !== undefined
+  );
+  for (let i = firstDataIndex; i < lastDataIndex; i++) {
+    if (progressedAtMonths[i] === undefined) {
+      progressedAtMonths[i] = 0;
+    }
+  }
+
   return progressedAtMonths;
 };
 
