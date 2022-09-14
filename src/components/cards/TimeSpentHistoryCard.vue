@@ -27,6 +27,21 @@ const state = reactive({
   isLoading: true,
 });
 
+moment.updateLocale("en", {
+  relativeTime: {
+    s: "",
+    m: "1 minute",
+    h: "1 hour",
+    d: "1 day",
+    M: "1 month",
+    y: "1 year",
+  },
+});
+
+const formatDuration = (val) => {
+  return moment.duration(val, "minutes").humanize();
+};
+
 const option = ref({
   backgroundColor: "rgba(0, 0, 0, 0)",
   tooltip: {
@@ -46,6 +61,7 @@ const option = ref({
   ],
   grid: {
     top: 40,
+    left: 70,
   },
   xAxis: {
     type: "time",
@@ -57,21 +73,30 @@ const option = ref({
   yAxis: [
     {
       type: "value",
-      show: true,
-      splitNumber: 2,
+      alignTicks: true,
+      axisLabel: {
+        formatter: function (val) {
+          return formatDuration(val);
+        },
+      },
     },
     {
       type: "value",
-      show: true,
-      splitNumber: 2,
+      alignTicks: true,
     },
   ],
+  useUTC: true,
   series: [
     {
       name: "Anime",
       type: "line",
       symbol: "none",
       yAxisIndex: 0,
+      tooltip: {
+        valueFormatter: function (val) {
+          return formatDuration(val);
+        },
+      },
       data: undefined,
     },
     {
@@ -79,6 +104,11 @@ const option = ref({
       type: "line",
       symbol: "none",
       yAxisIndex: 1,
+      tooltip: {
+        valueFormatter: function (val) {
+          return val + " chapters";
+        },
+      },
       data: undefined,
     },
   ],
@@ -170,7 +200,7 @@ watchEffect(() => {
 <template>
   <div class="card flex flex-col">
     <h1 class="text-2xl mb-1 font-semibold">Watch & Read History</h1>
-    <p>History of the total Anime watch time and Manga chapter count.</p>
+    <p>History of the total time spent watching Anime and reading Manga chapters.</p>
     <v-chart :option="option" :loading="state.isLoading" :autoresize="true" />
   </div>
 </template>
