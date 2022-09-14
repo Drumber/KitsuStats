@@ -10,6 +10,46 @@
   align-content: stretch;
 }
 
+@layer components {
 .card {
   @apply p-4 bg-background-50/20 dark:bg-background-700/20 backdrop-blur rounded-md;
 }
+}
+
+@layer utilities {
+  .scrollbar-color {
+    scrollbar-color: theme('backgroundColor.background.300') rgba(255, 255, 255, 0.1);
+  }
+
+  .dark .scrollbar-color {
+    scrollbar-color: theme('backgroundColor.background.600') rgba(0, 0, 0, 0.1);
+  }
+
+  .scrollbar-color::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .scrollbar-color::-webkit-scrollbar-thumb {
+    background-color: theme('backgroundColor.background.300');
+    border-radius: 6px;
+  }
+
+  .dark .scrollbar-color::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .scrollbar-color::-webkit-scrollbar-thumb {
+    background-color: theme('backgroundColor.background.600');
+    border-radius: 6px;
+  }
+
+  .scrollbar-thin {
+    @apply scrollbar-color;
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+}
+

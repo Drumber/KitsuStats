@@ -8,7 +8,6 @@ import NotFound from "./components/NotFound.vue";
 import { useStore } from "./store";
 
 import "./assets/main.css";
-import "./index.css";
 
 // toggle dark mode
 const store = useStore();

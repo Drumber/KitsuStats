@@ -382,6 +382,9 @@ const fetchLibraryEvents = async (
     <UserInfoCard
       :user-model="state.userModel"
       :user-attr="userAttr"
+      :anime-meta-data="state.animeMetaData"
+      :manga-meta-data="state.mangaMetaData"
+      class="h-[32rem] sm:h-96"
     ></UserInfoCard>
 
     <!-- Library Status -->
