@@ -408,5 +408,3 @@ const fetchLibraryEvents = async (
     ></ProgressedHeatmapCard>
   </div>
 </template>
-
-<style scoped></style>

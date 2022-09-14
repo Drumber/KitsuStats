@@ -17,7 +17,7 @@ document.documentElement.classList.toggle("dark", store.isDarkMode.value);
 const routes = [
   { path: "/", name: "Home", component: UserInput },
   {
-    path: "/:userId",
+    path: "/user/:userId",
     name: "User Statistics",
     component: StatsView,
     props: true,

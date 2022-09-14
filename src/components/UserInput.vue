@@ -88,7 +88,7 @@ const onInputChange = (text) => {
 const onSubmit = () => {
   const user = state.selectedUser;
   if (!user || !user.id) return;
-  router.push(`/${user.id}`);
+  router.push(`/user/${user.id}`);
 };
 </script>
 
