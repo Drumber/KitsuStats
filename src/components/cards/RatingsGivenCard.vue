@@ -83,16 +83,16 @@ const createIndicators = (maxValue, size, stepSize) => {
 const detectRatingSystem = (libraryEntries) => {
   const ratingsCounts = createChartData(libraryEntries, 20, 1, (x) => x);
 
-  let advanceUniqueRatingsCount = 0;
+  let advancedUniqueRatingsCount = 0;
   let regularUniqueRatingsCount = 0;
 
   for (let i = 0; i < ratingsCounts.length; i++) {
     const ratingCount = ratingsCounts[i];
     const rating = i + 1;
 
-    // unique advance ratings: 1, 3, 5, 7, 9, 11, 13, 15, 17, 19 (=> odd numbers)
+    // unique advanced ratings: 1, 3, 5, 7, 9, 11, 13, 15, 17, 19 (=> odd numbers)
     if (rating % 2 === 1) {
-      advanceUniqueRatingsCount += ratingCount;
+      advancedUniqueRatingsCount += ratingCount;
     }
 
     // unique regular ratings: 1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19 (=> not a multiple of 5)
@@ -102,8 +102,8 @@ const detectRatingSystem = (libraryEntries) => {
   }
 
   const threshold = 4;
-  if (advanceUniqueRatingsCount > threshold) {
-    return "advance";
+  if (advancedUniqueRatingsCount > threshold) {
+    return "advanced";
   } else if (regularUniqueRatingsCount > threshold) {
     return "regular";
   }

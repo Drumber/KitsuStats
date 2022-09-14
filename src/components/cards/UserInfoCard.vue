@@ -92,7 +92,7 @@ watchEffect(() => {
 
         <!-- About User -->
         <div class="overflow-auto scrollbar-thin">
-          <p class="text-gray-700 dark:text-gray-300">
+          <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
             {{ userAttr.about }}
           </p>
         </div>
