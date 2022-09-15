@@ -16,6 +16,7 @@ export default defineConfig({
   optimizeDeps: {
     include: ['tailwind.config.js']
   },
+  base: "/KitsuStats/",
   build: {
     commonjsOptions: {
       include: ["tailwind.config.js", "node_modules/**"],

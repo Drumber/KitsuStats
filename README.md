@@ -1,14 +1,16 @@
 # KitsuStats
+A web app that shows various statistics about a [Kitsu](https://kitsu.io) user profile.
 
-This template should help get you started developing with Vue 3 in Vite.
+To get started, go to [drumber.github.io/KitsuStats](https://drumber.github.io/KitsuStats) and search for the user or enter the user ID.
 
-## Recommended IDE Setup
+The loading and processing of the data may take a few seconds depending on the size of the user's library.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+## Technologies Used
+- [Vue.js](https://vuejs.org/) - Web Framework ⚙
+- [Tailwind CSS](https://tailwindcss.com/) - CSS Framework ✨
+- [ECharts](https://echarts.apache.org) ([vue-echarts](https://github.com/ecomfe/vue-echarts)) - Awesome charts 📊
+- [Algolia Search](https://github.com/algolia/algoliasearch-client-javascript) - JavaScript client for Algolia 🔎
+- [moment.js](https://momentjs.com/) - Date & Time utility ⏱
 
 ## Project Setup
 
