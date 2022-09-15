@@ -60,28 +60,28 @@ const option = ref({
   ],
 });
 
-const createChartData = (libraryEntries, size, stepSize, mapFunc) => {
+const createChartData = (libraryEntries, size, start, stepSize, mapFunc) => {
   const libraryRatings = libraryEntries
     .filter((e) => e.attributes.ratingTwenty != null)
     .map((e) => mapFunc(e.attributes.ratingTwenty));
   const ratingCounts = [];
-  for (let i = 1.0; i <= size; i += stepSize) {
+  for (let i = start; i <= size; i += stepSize) {
     const count = libraryRatings.filter((e) => e === i).length;
     ratingCounts.push(count);
   }
   return ratingCounts;
 };
 
-const createIndicators = (maxValue, size, stepSize) => {
+const createIndicators = (maxValue, size, start, stepSize) => {
   const indicators = [];
-  for (let i = 1.0; i <= size; i += stepSize) {
+  for (let i = start; i <= size; i += stepSize) {
     indicators.push({ name: `${i}`, max: maxValue });
   }
   return indicators;
 };
 
 const detectRatingSystem = (libraryEntries) => {
-  const ratingsCounts = createChartData(libraryEntries, 20, 1, (x) => x);
+  const ratingsCounts = createChartData(libraryEntries, 20, 1, 1, (x) => x);
 
   let advancedUniqueRatingsCount = 0;
   let regularUniqueRatingsCount = 0;
@@ -131,28 +131,43 @@ watchEffect(() => {
 
   // default: advanced rating (20)
   let size = 10;
+  let start = 1.0;
   let stepSize = 0.5;
   let mapFunc = (x) => x / 2.0;
   if (ratingSystem === "regular") {
     // regular rating (10)
     size = 5;
+    start = 0.5;
     stepSize = 0.5;
     mapFunc = (x) => Math.round(x / 2.0) / 2.0;
   } else if (ratingSystem === "simple") {
     // simple rating (5)
     size = 4;
+    start = 1.0;
     stepSize = 1;
     mapFunc = (x) => Math.round(x / 5.0);
   }
 
-  const animeChartData = createChartData(animeEntries, size, stepSize, mapFunc);
-  const mangaChartData = createChartData(mangaEntries, size, stepSize, mapFunc);
+  const animeChartData = createChartData(
+    animeEntries,
+    size,
+    start,
+    stepSize,
+    mapFunc
+  );
+  const mangaChartData = createChartData(
+    mangaEntries,
+    size,
+    start,
+    stepSize,
+    mapFunc
+  );
 
   const maxRatingAnime = Math.max(...animeChartData);
   const maxRatingManga = Math.max(...mangaChartData);
 
   const maxValue = 1.0;
-  const indicators = createIndicators(maxValue, size, stepSize);
+  const indicators = createIndicators(maxValue, size, start, stepSize);
   option.value.radar.indicator = indicators;
 
   option.value.series[0].data = [
