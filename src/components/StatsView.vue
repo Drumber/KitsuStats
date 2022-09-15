@@ -17,6 +17,8 @@ import AnimeSubtypeCard from "./cards/AnimeSubtypeCard.vue";
 import MediaYearsCard from "./cards/MediaYearsCard.vue";
 import TimeSpentHistoryCard from "./cards/TimeSpentHistoryCard.vue";
 import BestRatedCard from "./cards/BestRatedCard.vue";
+import "../assets/echarts/custom-light";
+import "../assets/echarts/custom-dark";
 
 const props = defineProps({
   userId: {
@@ -29,8 +31,11 @@ const route = useRoute();
 const router = useRouter();
 
 const store = useStore();
+
 // automatically switch echart theme
-const chartTheme = computed(() => (store.isDarkMode.value ? "dark" : "light"));
+const chartTheme = computed(() =>
+  store.isDarkMode.value ? "custom-dark" : "custom-light"
+);
 provide(THEME_KEY, chartTheme);
 
 const state = reactive({
