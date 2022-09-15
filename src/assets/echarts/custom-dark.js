@@ -1,4 +1,4 @@
-import * as echarts from "echarts";
+import { registerTheme } from "echarts/core";
 
 var contrastColor = "#B9B8CE";
 var backgroundColor = "#100C2A";
@@ -194,4 +194,4 @@ var theme = {
 };
 
 theme.categoryAxis.splitLine.show = false;
-echarts.registerTheme("custom-dark", theme);
+registerTheme("custom-dark", theme);

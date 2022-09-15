@@ -1,6 +1,6 @@
-import * as echarts from "echarts";
+import { registerTheme } from "echarts/core";
 
-echarts.registerTheme("custom-light", {
+registerTheme("custom-light", {
   color: [
     "#6c90ff",
     "#b5ff92",
