@@ -22,7 +22,7 @@ function setStoredTheme(theme) {
 }
 
 function determineIsDarkMode() {
-  if (getStoredTheme() === undefined) {
+  if (!getStoredTheme()) {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   }
   return getStoredTheme() === "dark";
