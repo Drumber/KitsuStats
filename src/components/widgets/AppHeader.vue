@@ -21,7 +21,15 @@ const vOnScroll = {
     class="w-full sticky top-0 z-30 transition-all duration-300"
   >
     <div class="p-4 flex">
-      <a href="/">KitsuStats</a>
+      <a href="/">
+        <img
+          src="/favicon.svg"
+          class="mr-1 mb-2 inline"
+          width="24"
+          height="24"
+        />
+        KitsuStats
+      </a>
       <div id="them-switch" class="ml-auto">
         <theme-switch></theme-switch>
       </div>
