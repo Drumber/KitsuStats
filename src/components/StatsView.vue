@@ -16,6 +16,7 @@ import moment from "moment";
 import AnimeSubtypeCard from "./cards/AnimeSubtypeCard.vue";
 import MediaYearsCard from "./cards/MediaYearsCard.vue";
 import TimeSpentHistoryCard from "./cards/TimeSpentHistoryCard.vue";
+import BestRatedCard from "./cards/BestRatedCard.vue";
 
 const props = defineProps({
   userId: {
@@ -442,5 +443,12 @@ const fetchLibraryEvents = async (
       :manga-library-data="state.mangaLibraryData"
       class="lg:col-span-2 h-96"
     ></TimeSpentHistoryCard>
+
+    <!-- Best Rated Media -->
+    <BestRatedCard
+      :anime-library-data="state.animeLibraryData"
+      :manga-library-data="state.mangaLibraryData"
+      class="h-96"
+    ></BestRatedCard>
   </div>
 </template>

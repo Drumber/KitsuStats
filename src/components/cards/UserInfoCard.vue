@@ -40,7 +40,6 @@ const option = ref({
   series: {
     name: "Media Kind",
     type: "bar",
-    realtimeSort: true,
     data: [],
     label: {
       show: true,

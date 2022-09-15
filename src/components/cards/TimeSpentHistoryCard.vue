@@ -200,7 +200,9 @@ watchEffect(() => {
 <template>
   <div class="card flex flex-col">
     <h1 class="text-2xl mb-1 font-semibold">Watch & Read History</h1>
-    <p>History of the total time spent watching Anime and reading Manga chapters.</p>
+    <p>
+      History of the total time spent watching Anime and reading Manga chapters.
+    </p>
     <v-chart :option="option" :loading="state.isLoading" :autoresize="true" />
   </div>
 </template>
