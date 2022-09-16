@@ -15,8 +15,12 @@ const createDataArray = (libraryData) => {
   const data = [];
   for (const entry of libraryEntries) {
     const ratingTwenty = entry.attributes.ratingTwenty;
+    if (!ratingTwenty) continue;
     const progressedAt = entry.attributes.progressedAt;
-    if (!ratingTwenty || !progressedAt) continue;
+    const finishedAt = entry.attributes.finishedAt;
+
+    const dateString = finishedAt || progressedAt;
+    const date = dateString ? +new Date(dateString) : 0;
 
     const media = getMediaForEntry(entry, included);
     if (!media) continue;
@@ -28,7 +32,7 @@ const createDataArray = (libraryData) => {
       title: mediaTitle,
       url: mediaUrl,
       rating: ratingTwenty,
-      date: +new Date(progressedAt),
+      date: date,
     });
   }
 
