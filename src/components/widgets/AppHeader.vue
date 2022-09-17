@@ -30,7 +30,8 @@ const vOnScroll = {
         />
         KitsuStats
       </a>
-      <div id="them-switch" class="ml-auto">
+      <div class="ml-auto flex items-center">
+        <a class="mr-3" href="https://github.com/Drumber/KitsuStats" target="_blank">GitHub</a>
         <theme-switch></theme-switch>
       </div>
     </div>
