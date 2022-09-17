@@ -2,7 +2,6 @@
 import { onMounted, reactive } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "../store";
-import algoliasearch from "algoliasearch";
 import { ALGOLIA_APP_ID, API_URL } from "../constants";
 import AppHeader from "./widgets/AppHeader.vue";
 import SuggestionInput from "./widgets/SuggestionInput.vue";
@@ -14,8 +13,9 @@ let searchIndex = undefined;
 let awaitingSearch = undefined;
 
 onMounted(async () => {
+  const algoliasearch = await import("algoliasearch");
   const alogliaUserKey = await store.getAlgoliaUserKey();
-  const client = algoliasearch(ALGOLIA_APP_ID, alogliaUserKey.key);
+  const client = algoliasearch.default(ALGOLIA_APP_ID, alogliaUserKey.key);
   searchIndex = client.initIndex(alogliaUserKey.index);
   console.log("Init search index");
   if (awaitingSearch) {

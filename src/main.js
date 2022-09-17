@@ -1,7 +1,6 @@
 import { createApp, nextTick } from "vue";
 import { createRouter, createWebHashHistory } from "vue-router";
 import App from "./App.vue";
-import ECharts from "vue-echarts";
 import UserInput from "./components/UserInput.vue";
 import StatsView from "./components/StatsView.vue";
 import NotFound from "./components/NotFound.vue";
@@ -37,5 +36,4 @@ router.afterEach((to) => {
 
 const app = createApp(App);
 app.use(router);
-app.component("v-chart", ECharts);
 app.mount("#app");
