@@ -21,15 +21,5 @@ export default defineConfig({
     commonjsOptions: {
       include: ["tailwind.config.js", "node_modules/**"],
     },
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("/node_modules/echarts/"))
-            return "echarts";
-          if (id.includes("/node_modules/zrender/"))
-            return "zrender";
-        },
-      },
-    },
   },
 });
