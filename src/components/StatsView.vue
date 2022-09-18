@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { onMounted, reactive, provide, toRaw } from "vue";
+import { onMounted, reactive, provide } from "vue";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { API_URL, LIBRARY_ENTRIES_PAGE_LIMIT } from "../constants";
 import { useStore } from "../store";
@@ -56,6 +56,21 @@ const state = reactive({
   dateOfCachedData: undefined,
 });
 
+const clearUserData = () => {
+  state.userModel = undefined;
+  state.userStats = undefined;
+};
+
+const clearLibraryData = () => {
+  state.animeMetaData = undefined;
+  state.mangaMetaData = undefined;
+  state.animeLibraryData = undefined;
+  state.mangaLibraryData = undefined;
+  state.libraryEventsMetaData = undefined;
+  state.libraryEvents = undefined;
+  state.libraryEventsFirstYear = undefined;
+};
+
 const userAttr = computed(() => {
   const model = state.userModel;
   if (!model) return undefined;
@@ -96,15 +111,8 @@ onBeforeRouteUpdate(async (to, from) => {
   if (to.params.userId === from.params.userId) return;
 
   // clear old state data
-  state.userModel = undefined;
-  state.userStats = undefined;
-  state.animeMetaData = undefined;
-  state.mangaMetaData = undefined;
-  state.animeLibraryData = undefined;
-  state.mangaLibraryData = undefined;
-  state.libraryEventsMetaData = undefined;
-  state.libraryEvents = undefined;
-  state.libraryEventsFirstYear = undefined;
+  clearUserData();
+  clearLibraryData();
 
   state.isLoading = true;
 
@@ -128,19 +136,9 @@ onMounted(async () => {
   state.isLoading = false;
 });
 
-const storeDataInCache = async () => {
-  const dataObj = {
-    date: +new Date(),
-    animeMetaData: toRaw(state.animeMetaData),
-    mangaMetaData: toRaw(state.mangaMetaData),
-    animeLibraryData: toRaw(state.animeLibraryData),
-    mangaLibraryData: toRaw(state.mangaLibraryData),
-    libraryEventsMetaData: toRaw(state.libraryEventsMetaData),
-    libraryEvents: toRaw(state.libraryEvents),
-  };
-
+const storeDataInCache = async (userId, dataObj) => {
   try {
-    const key = await cache.set(props.userId, dataObj);
+    const key = await cache.set(userId, dataObj);
     console.log("Stored data in cache.", key);
   } catch (error) {
     console.log("Failed to store data in cache:", error);
@@ -165,6 +163,7 @@ let refreshDataLock = false;
 const refreshData = async () => {
   if (refreshDataLock === true) return;
   refreshDataLock = true;
+  clearLibraryData();
   try {
     await updateLibraryData(props.userId, true);
   } finally {
@@ -204,16 +203,22 @@ const updateLibraryData = async (userId, forceUpdate) => {
     console.debug("Cache is older than 12 hours. Updating data...");
   }
 
-  if ((await updateLibraryEntries(userId)) === true) {
+  const cacheDataObj = {
+    date: +new Date(),
+  };
+
+  if ((await updateLibraryEntries(userId, cacheDataObj)) === true) {
     const currentYear = new Date().getFullYear();
-    if ((await updateLibraryEvents(userId, currentYear)) === true) {
-      storeDataInCache();
+    if (
+      (await updateLibraryEvents(userId, currentYear, cacheDataObj)) === true
+    ) {
       state.displayingCachedData = false;
+      storeDataInCache(userId, cacheDataObj);
     }
   }
 };
 
-const updateLibraryEntries = async (userId) => {
+const updateLibraryEntries = async (userId, cacheDataObj) => {
   state.isFetchingLibraryEntries = true;
   let success = true;
   try {
@@ -222,12 +227,25 @@ const updateLibraryEntries = async (userId) => {
     console.log("Fetched anime library data", libraryDataAnime);
     state.animeMetaData = libraryDataAnime.meta;
     state.animeLibraryData = libraryDataAnime;
+    // Important: Create deep copys to be independent from the state object
+    cacheDataObj.animeMetaData = JSON.parse(
+      JSON.stringify(libraryDataAnime.meta)
+    );
+    cacheDataObj.animeLibraryData = JSON.parse(
+      JSON.stringify(libraryDataAnime)
+    );
 
     // fetch max 500 Manga entries
     const libraryDataManga = await fetchLibraryEntries(userId, "manga");
     console.log("Fetched manga library data", libraryDataManga);
     state.mangaMetaData = libraryDataManga.meta;
     state.mangaLibraryData = libraryDataManga;
+    cacheDataObj.mangaMetaData = JSON.parse(
+      JSON.stringify(libraryDataManga.meta)
+    );
+    cacheDataObj.mangaLibraryData = JSON.parse(
+      JSON.stringify(libraryDataManga)
+    );
 
     // handle more than 500 Anime entries
     const animeCount = libraryDataAnime.meta.count;
@@ -253,6 +271,8 @@ const updateLibraryEntries = async (userId) => {
         );
         state.animeLibraryData.data.push(...response.data);
         state.animeLibraryData.included.push(...response.included);
+        cacheDataObj.animeLibraryData.data.push(...response.data);
+        cacheDataObj.animeLibraryData.included.push(...response.included);
         fetchCount += response.data.length;
       } while (fetchCount < animeCount);
     }
@@ -281,6 +301,8 @@ const updateLibraryEntries = async (userId) => {
         );
         state.mangaLibraryData.data.push(...response.data);
         state.mangaLibraryData.included.push(...response.included);
+        cacheDataObj.mangaLibraryData.data.push(...response.data);
+        cacheDataObj.mangaLibraryData.included.push(...response.included);
         fetchCount += response.data.length;
       } while (fetchCount < mangaCount);
     }
@@ -293,7 +315,7 @@ const updateLibraryEntries = async (userId) => {
   return success;
 };
 
-const updateLibraryEvents = async (userId, year) => {
+const updateLibraryEvents = async (userId, year, cacheDataObj) => {
   state.isFetchingLibraryEvents = true;
   let success = true;
   try {
@@ -337,14 +359,19 @@ const updateLibraryEvents = async (userId, year) => {
 
       if (!state.libraryEventsMetaData) {
         state.libraryEventsMetaData = response.meta;
+        cacheDataObj.libraryEventsMetaData = JSON.parse(
+          JSON.stringify(response.meta)
+        );
       }
 
       totalCount = response.meta.count;
 
       if (!state.libraryEvents) {
-        state.libraryEvents = response.data;
+        state.libraryEvents = [...response.data];
+        cacheDataObj.libraryEvents = [...response.data];
       } else {
         state.libraryEvents.push(...response.data);
+        cacheDataObj.libraryEvents.push(...response.data);
       }
       fetchedCount += response.data.length;
 
@@ -371,7 +398,10 @@ const updateLibraryEvents = async (userId, year) => {
         if (length > 0) {
           const createdAt =
             state.libraryEvents[length - 1].attributes.createdAt;
-          state.libraryEventsFirstYear = moment(createdAt).year();
+
+          const firstYear = moment(createdAt).year();
+          state.libraryEventsFirstYear = firstYear;
+          cacheDataObj.libraryEventsFirstYear = firstYear;
         }
       } else {
         // try to fetch first library event
@@ -379,7 +409,10 @@ const updateLibraryEvents = async (userId, year) => {
         const response = await fetchLibraryEvents(userId, lastPage, 1);
         const createdAt =
           response.data[response.data.length - 1].attributes.createdAt;
-        state.libraryEventsFirstYear = moment(createdAt).year();
+
+        const firstYear = moment(createdAt).year();
+        state.libraryEventsFirstYear = firstYear;
+        cacheDataObj.libraryEventsFirstYear = firstYear;
       }
     }
   } catch (error) {
