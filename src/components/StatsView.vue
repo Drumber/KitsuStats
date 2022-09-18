@@ -164,9 +164,10 @@ let refreshDataLock = false;
 const refreshData = async () => {
   if (refreshDataLock === true) return;
   refreshDataLock = true;
+  const userId = props.userId;
   clearLibraryData();
   try {
-    await updateLibraryData(props.userId, true);
+    await updateLibraryData(userId, true);
   } finally {
     refreshDataLock = false;
   }
@@ -202,6 +203,14 @@ const updateLibraryData = async (userId, forceUpdate) => {
       return;
     }
     console.debug("Cache is older than 12 hours. Updating data...");
+  }
+
+  if (cachedData) {
+    try {
+      await cache.del(userId);
+    } catch (error) {
+      console.log("Failed to delete cached data.", error);
+    }
   }
 
   const cacheDataObj = {
