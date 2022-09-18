@@ -388,9 +388,12 @@ const updateLibraryEvents = async (userId, year, cacheDataObj) => {
 
       if (!state.libraryEvents) {
         state.libraryEvents = [...response.data];
-        cacheDataObj.libraryEvents = [...response.data];
       } else {
         state.libraryEvents.push(...response.data);
+      }
+      if (!cacheDataObj.libraryEvents) {
+        cacheDataObj.libraryEvents = [...response.data];
+      } else {
         cacheDataObj.libraryEvents.push(...response.data);
       }
       fetchedCount += response.data.length;
