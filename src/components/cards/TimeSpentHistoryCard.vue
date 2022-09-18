@@ -27,7 +27,7 @@ const state = reactive({
   isLoading: true,
 });
 
-moment.updateLocale("en", {
+moment.defineLocale("en-custom", {
   relativeTime: {
     s: "",
     m: "1 minute",
@@ -37,9 +37,11 @@ moment.updateLocale("en", {
     y: "1 year",
   },
 });
+// defineLocale will change the global locale, so we change back the global locale to 'en'
+moment.locale("en");
 
 const formatDuration = (val) => {
-  return moment.duration(val, "minutes").humanize();
+  return moment.duration(val, "minutes").locale("en-custom").humanize();
 };
 
 const option = ref({

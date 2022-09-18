@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { onMounted, reactive, provide } from "vue";
+import { onMounted, reactive, provide, toRaw } from "vue";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { API_URL, LIBRARY_ENTRIES_PAGE_LIMIT } from "../constants";
 import { useStore } from "../store";
@@ -17,6 +17,7 @@ import AnimeSubtypeCard from "./cards/AnimeSubtypeCard.vue";
 import MediaYearsCard from "./cards/MediaYearsCard.vue";
 import TimeSpentHistoryCard from "./cards/TimeSpentHistoryCard.vue";
 import BestRatedCard from "./cards/BestRatedCard.vue";
+import cache from "../cache";
 import "../assets/echarts/custom-light";
 import "../assets/echarts/custom-dark";
 
@@ -51,6 +52,8 @@ const state = reactive({
   isLoading: true,
   isFetchingLibraryEntries: false,
   isFetchingLibraryEvents: false,
+  displayingCachedData: false,
+  dateOfCachedData: undefined,
 });
 
 const userAttr = computed(() => {
@@ -125,6 +128,50 @@ onMounted(async () => {
   state.isLoading = false;
 });
 
+const storeDataInCache = async () => {
+  const dataObj = {
+    date: +new Date(),
+    animeMetaData: toRaw(state.animeMetaData),
+    mangaMetaData: toRaw(state.mangaMetaData),
+    animeLibraryData: toRaw(state.animeLibraryData),
+    mangaLibraryData: toRaw(state.mangaLibraryData),
+    libraryEventsMetaData: toRaw(state.libraryEventsMetaData),
+    libraryEvents: toRaw(state.libraryEvents),
+  };
+
+  try {
+    const key = await cache.set(props.userId, dataObj);
+    console.log("Stored data in cache.", key);
+  } catch (error) {
+    console.log("Failed to store data in cache:", error);
+  }
+};
+
+const setStateFromDataObj = (dataObj) => {
+  state.animeMetaData = dataObj.animeMetaData;
+  state.mangaMetaData = dataObj.mangaMetaData;
+  state.animeLibraryData = dataObj.animeLibraryData;
+  state.mangaLibraryData = dataObj.mangaLibraryData;
+  state.libraryEventsMetaData = dataObj.libraryEventsMetaData;
+  state.libraryEvents = dataObj.libraryEvents;
+
+  state.dateOfCachedData = dataObj.date;
+  state.displayingCachedData = true;
+};
+
+let refreshDataLock = false;
+
+// user triggered data update
+const refreshData = async () => {
+  if (refreshDataLock === true) return;
+  refreshDataLock = true;
+  try {
+    await updateLibraryData(props.userId, true);
+  } finally {
+    refreshDataLock = false;
+  }
+};
+
 const updateUserModel = async (userId) => {
   try {
     const response = await fetchUserModel(userId);
@@ -139,14 +186,36 @@ const updateUserModel = async (userId) => {
   }
 };
 
-const updateLibraryData = async (userId) => {
-  await updateLibraryEntries(userId);
-  const currentYear = new Date().getFullYear();
-  await updateLibraryEvents(userId, currentYear);
+const updateLibraryData = async (userId, forceUpdate) => {
+  let cachedData = undefined;
+  try {
+    cachedData = await cache.get(userId);
+  } catch (error) {
+    console.log("Cache is unavailable.", error);
+  }
+
+  if (cachedData && !forceUpdate) {
+    setStateFromDataObj(cachedData);
+    const cacheDateDiff = moment().diff(cachedData.date, "hours");
+    if (cacheDateDiff < 12) {
+      console.debug("Cache is not older than 12 hours. Do not update data...");
+      return;
+    }
+    console.debug("Cache is older than 12 hours. Updating data...");
+  }
+
+  if ((await updateLibraryEntries(userId)) === true) {
+    const currentYear = new Date().getFullYear();
+    if ((await updateLibraryEvents(userId, currentYear)) === true) {
+      storeDataInCache();
+      state.displayingCachedData = false;
+    }
+  }
 };
 
 const updateLibraryEntries = async (userId) => {
   state.isFetchingLibraryEntries = true;
+  let success = true;
   try {
     // fetch max 500 Anime entries
     const libraryDataAnime = await fetchLibraryEntries(userId, "anime");
@@ -217,13 +286,16 @@ const updateLibraryEntries = async (userId) => {
     }
   } catch (error) {
     console.error("Failed to fetch library entries.", error);
+    success = false;
   } finally {
     state.isFetchingLibraryEntries = false;
   }
+  return success;
 };
 
 const updateLibraryEvents = async (userId, year) => {
   state.isFetchingLibraryEvents = true;
+  let success = true;
   try {
     let fetchedCount = state.libraryEvents ? state.libraryEvents.length : 0;
     let totalCount = state.libraryEventsMetaData
@@ -312,9 +384,11 @@ const updateLibraryEvents = async (userId, year) => {
     }
   } catch (error) {
     console.error("Failed to fetch library events.", error);
+    success = false;
   } finally {
     state.isFetchingLibraryEvents = false;
   }
+  return success;
 };
 
 const provideLibraryEventsForYear = async (year) => {
@@ -348,7 +422,7 @@ const fetchLibraryEntries = async (
     `&fields[${kind}]=canonicalTitle,startDate` +
     (kind === "anime" ? `,showType,episodeLength` : "") +
     `&include=${kind}`;
-  const response = await fetch(url, { cache: "force-cache" });
+  const response = await fetch(url);
   const json = await response.json();
   if (!response.ok) {
     throw Error(JSON.stringify(json));
@@ -369,7 +443,7 @@ const fetchLibraryEvents = async (
     `&page[offset]=${pageOffset}&page[limit]=${pageLimit}` +
     `&fields[libraryEvents]=createdAt` +
     `&sort=-createdAt`;
-  const response = await fetch(url, { cache: "force-cache" });
+  const response = await fetch(url);
   const json = await response.json();
   if (!response.ok) {
     throw Error(JSON.stringify(json));
@@ -391,6 +465,20 @@ const fetchLibraryEvents = async (
     v-if="state.userModel !== undefined"
     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-6xl p-2"
   >
+    <!-- Cache Information -->
+    <div
+      v-if="state.displayingCachedData"
+      class="card col-span-full text-gray-600 dark:text-gray-400"
+    >
+      Updated data {{ moment(state.dateOfCachedData).fromNow() }}
+      <button
+        @click="refreshData"
+        class="float-right px-2 py-0.5 bg-background-300/40 dark:bg-background-500/30 rounded-md"
+      >
+        Refresh data
+      </button>
+    </div>
+
     <!-- User Info Card -->
     <UserInfoCard
       :user-model="state.userModel"

@@ -10,6 +10,7 @@
   "dependencies": {
     "algoliasearch": "^4.14.2",
     "echarts": "^5.3.3",
+    "idb": "^7.0.2",
     "moment": "^2.29.4",
     "vue": "^3.2.38",
     "vue-echarts": "^6.2.3",
