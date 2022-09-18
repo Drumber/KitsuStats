@@ -81,10 +81,11 @@ watchEffect(() => {
   if (!props.userStats) return;
   const stats = props.userStats;
 
-  const animeCategories = findStatsData(stats, "anime-category-breakdown")[0]
-    .categories;
-  const mangaCategories = findStatsData(stats, "manga-category-breakdown")[0]
-    .categories;
+  const animeCategoryBreakdown = findStatsData(stats, "anime-category-breakdown")[0]
+  const animeCategories = animeCategoryBreakdown ? animeCategoryBreakdown.categories : [];
+
+  const mangaCategoryBreakdown = findStatsData(stats, "manga-category-breakdown")[0]
+  const mangaCategories = mangaCategoryBreakdown ? mangaCategoryBreakdown.categories : [];
 
   const categoryKeys = new Set([
     ...Object.keys(animeCategories),
