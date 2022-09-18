@@ -152,6 +152,7 @@ const setStateFromDataObj = (dataObj) => {
   state.mangaLibraryData = dataObj.mangaLibraryData;
   state.libraryEventsMetaData = dataObj.libraryEventsMetaData;
   state.libraryEvents = dataObj.libraryEvents;
+  state.libraryEventsFirstYear = dataObj.libraryEventsFirstYear;
 
   state.dateOfCachedData = dataObj.date;
   state.displayingCachedData = true;
@@ -215,6 +216,25 @@ const updateLibraryData = async (userId, forceUpdate) => {
       state.displayingCachedData = false;
       storeDataInCache(userId, cacheDataObj);
     }
+  }
+};
+
+const provideLibraryEventsForYear = async (year) => {
+  const userId = props.userId;
+  if (!userId) return;
+
+  let cacheDataObj = undefined;
+  try {
+    cacheDataObj = await cache.get(userId);
+  } catch (error) {
+    console.log("Failed to get cached data.", error);
+  }
+
+  if (
+    (await updateLibraryEvents(userId, year, cacheDataObj || {})) === true &&
+    cacheDataObj
+  ) {
+    storeDataInCache(userId, cacheDataObj);
   }
 };
 
@@ -422,12 +442,6 @@ const updateLibraryEvents = async (userId, year, cacheDataObj) => {
     state.isFetchingLibraryEvents = false;
   }
   return success;
-};
-
-const provideLibraryEventsForYear = async (year) => {
-  const userId = props.userId;
-  if (!userId) return;
-  await updateLibraryEvents(userId, year);
 };
 
 const fetchUserModel = async (userId) => {
