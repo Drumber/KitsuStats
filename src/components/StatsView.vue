@@ -196,12 +196,13 @@ const updateLibraryData = async (userId, forceUpdate) => {
   }
 
   if (cachedData && !forceUpdate) {
-    setStateFromDataObj(cachedData);
     const cacheDateDiff = moment().diff(cachedData.date, "hours");
     if (cacheDateDiff < 12) {
+      setStateFromDataObj(cachedData);
       console.debug("Cache is not older than 12 hours. Do not update data...");
       return;
     }
+    clearLibraryData();
     console.debug("Cache is older than 12 hours. Updating data...");
   }
 
