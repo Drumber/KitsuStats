@@ -20,6 +20,7 @@ import BestRatedCard from "./cards/BestRatedCard.vue";
 import cache from "../cache";
 import "../assets/echarts/custom-light";
 import "../assets/echarts/custom-dark";
+import TimelineCard from "./cards/TimelineCard.vue";
 
 const props = defineProps({
   userId: {
@@ -478,8 +479,8 @@ const fetchLibraryEntries = async (
     `/library-entries?filter[user_id]=${userId}` +
     `&filter[kind]=${kind}` +
     `&page[offset]=${pageOffset}&page[limit]=${pageLimit}` +
-    `&fields[libraryEntries]=ratingTwenty,progress,finishedAt,progressedAt,${kind}` +
-    `&fields[${kind}]=canonicalTitle,startDate` +
+    `&fields[libraryEntries]=status,ratingTwenty,progress,startedAt,finishedAt,progressedAt,${kind}` +
+    `&fields[${kind}]=canonicalTitle,startDate,posterImage` +
     (kind === "anime" ? `,showType,episodeLength` : "") +
     `&include=${kind}`;
   const response = await fetch(url);
@@ -603,5 +604,12 @@ const fetchLibraryEvents = async (
       :manga-library-data="state.mangaLibraryData"
       class="h-96"
     ></BestRatedCard>
+
+    <!-- Library Timeline -->
+    <TimelineCard
+      :anime-library-data="state.animeLibraryData"
+      :manga-library-data="state.mangaLibraryData"
+      class="h-96 col-span-full"
+    ></TimelineCard>
   </div>
 </template>

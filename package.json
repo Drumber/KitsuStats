@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "algoliasearch": "^4.14.2",
-    "echarts": "^5.3.3",
+    "echarts": "^5.4.0-rc.1",
     "idb": "^7.0.2",
     "moment": "^2.29.4",
     "vue": "^3.2.38",
