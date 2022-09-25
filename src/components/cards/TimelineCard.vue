@@ -113,6 +113,7 @@ const transformData = (libraryData, kind) => {
         0, // count of elements in the same timespan
         -1, // y-index of this element
         title,
+        entry.id,
       ],
       itemStyle: {
         normal: {
@@ -295,6 +296,27 @@ const option = ref({
   ],
 });
 
+const onChartClicked = (params) => {
+  const libraryEntryId = params.data.value[5];
+  if (!libraryEntryId) return;
+
+  const libraryEntry = [
+    ...props.animeLibraryData.data,
+    ...props.mangaLibraryData.data,
+  ].find((e) => e.id === libraryEntryId);
+
+  let mediaUrl = "https://kitsu.io";
+  if (libraryEntry.relationships.anime) {
+    mediaUrl += "/anime/" + libraryEntry.relationships.anime.data.id;
+  } else if (libraryEntry.relationships.manga) {
+    mediaUrl += "/manga/" + libraryEntry.relationships.manga.data.id;
+  } else {
+    return;
+  }
+
+  window.open(mediaUrl, "_blank").focus();
+};
+
 watchEffect(() => {
   if (!props.animeLibraryData || !props.mangaLibraryData) return;
   maxDatasetCount = 0;
@@ -313,6 +335,11 @@ watchEffect(() => {
 <template>
   <div class="card flex flex-col">
     <h1 class="text-2xl mb-1 font-semibold">Library Timeline</h1>
-    <v-chart :option="option" :autoresize="true" ref="chart" />
+    <v-chart
+      :option="option"
+      :autoresize="true"
+      @click="onChartClicked"
+      ref="chart"
+    />
   </div>
 </template>
