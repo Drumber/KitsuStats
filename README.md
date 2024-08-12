@@ -1,5 +1,5 @@
 # KitsuStats
-A web app that shows various statistics about a [Kitsu](https://kitsu.io) user profile.
+A web app that shows various statistics about a [Kitsu](https://kitsu.app) user profile.
 
 To get started, go to [drumber.github.io/KitsuStats](https://drumber.github.io/KitsuStats) and search for the user or enter the user ID.
 

@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import { reactive } from "vue";
+import { BASE_URL } from "../../constants";
 
 const props = defineProps(["animeLibraryData", "mangaLibraryData"]);
 
@@ -25,7 +26,7 @@ const createDataArray = (libraryData) => {
     const media = getMediaForEntry(entry, included);
     if (!media) continue;
     const mediaTitle = media.attributes.canonicalTitle;
-    const mediaUrl = `https://kitsu.io/${media.type}/${media.id}`;
+    const mediaUrl = `${BASE_URL}/${media.type}/${media.id}`;
 
     data.push({
       id: entry.id,

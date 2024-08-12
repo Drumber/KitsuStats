@@ -11,6 +11,7 @@ import VChart from "vue-echarts";
 import { CustomChart } from "echarts/charts";
 import { graphic, format } from "echarts/core";
 import moment from "moment";
+import { BASE_URL } from "../../constants";
 
 use([
   CanvasRenderer,
@@ -305,7 +306,7 @@ const onChartClicked = (params) => {
     ...props.mangaLibraryData.data,
   ].find((e) => e.id === libraryEntryId);
 
-  let mediaUrl = "https://kitsu.io";
+  let mediaUrl = BASE_URL;
   if (libraryEntry.relationships.anime) {
     mediaUrl += "/anime/" + libraryEntry.relationships.anime.data.id;
   } else if (libraryEntry.relationships.manga) {

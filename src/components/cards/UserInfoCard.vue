@@ -6,6 +6,7 @@ import { use } from "echarts/core";
 import VChart from "vue-echarts";
 import moment from "moment";
 import { reactive, ref, watchEffect } from "vue";
+import { BASE_URL } from "../../constants";
 
 const props = defineProps([
   "userModel",
@@ -78,7 +79,7 @@ watchEffect(() => {
         <!-- Username and ID -->
         <h1 class="text-2xl mb-1">
           <a
-            :href="'https://kitsu.io/users/' + userModel.id"
+            :href="BASE_URL + '/users/' + userModel.id"
             class="text-primary-500 dark:text-primary-400 font-semibold"
             target="_blank"
           >
