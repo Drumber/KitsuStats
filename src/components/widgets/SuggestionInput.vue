@@ -1,5 +1,6 @@
 <script setup>
 import { reactive, ref, watch } from "vue";
+import { fixMediaUrl } from "../../kitsu-url-fix";
 
 const props = defineProps(["suggestions", "selectedItem", "placeholder"]);
 const emit = defineEmits(["update:selectedItem", "update:userInput", "submit"]);
@@ -88,7 +89,7 @@ const submit = () => {
       >
         <img
           v-if="item.avatar"
-          :src="item.avatar ? item.avatar.tiny : ''"
+          :src="item.avatar ? fixMediaUrl(item.avatar.tiny) : ''"
           class="rounded-full h-8 w-8 inline-block"
         />
         <div v-else class="h-8 w-8 rounded-full bg-white/10 inline-block"></div>

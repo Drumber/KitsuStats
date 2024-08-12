@@ -7,6 +7,7 @@ import VChart from "vue-echarts";
 import moment from "moment";
 import { reactive, ref, watchEffect } from "vue";
 import { BASE_URL } from "../../constants";
+import { fixMediaUrl } from "../../kitsu-url-fix";
 
 const props = defineProps([
   "userModel",
@@ -67,7 +68,7 @@ watchEffect(() => {
       <!-- Profile Picture -->
       <img
         v-if="userAttr.avatar"
-        :src="userAttr.avatar ? userAttr.avatar.medium : ''"
+        :src="userAttr.avatar ? fixMediaUrl(userAttr.avatar.medium) : ''"
         class="rounded-full h-16 w-16 shrink-0 inline-block"
       />
       <div
